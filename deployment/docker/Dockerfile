@@ -11,15 +11,16 @@ WORKDIR /app
 
 # Create my_dropbox directory for file synchronization
 RUN mkdir -p /app/my_dropbox
+RUN mkdir -p /app/data
 
 # Copy requirements file
-COPY client/requirements.txt .
+COPY client/requirements.txt /app/requirements.txt
 
 # Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r /app/requirements.txt
 
 # Copy application code
-COPY client/ .
+COPY client/ /app/
 
 # Make start script executable
 RUN chmod +x /app/scripts/bash/start.sh

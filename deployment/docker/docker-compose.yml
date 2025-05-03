@@ -9,12 +9,20 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ../../client:/app
+      - ../../client/server:/app/server
+      - ../../client/db:/app/db
+      - ../../client/scripts:/app/scripts
+      - ../../client/requirements.txt:/app/requirements.txt
+      - ../../client/config.py:/app/config.py
       - dropbox-data:/app/my_dropbox
+      - db-data:/app/data
     environment:
       - PYTHONPATH=/app
+      - DATABASE_URL=sqlite:///./data/dropbox.db
     restart: unless-stopped
 
 volumes:
   dropbox-data:
+    driver: local
+  db-data:
     driver: local

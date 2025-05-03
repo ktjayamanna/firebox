@@ -1,109 +1,94 @@
 #!/bin/bash
 set -e
 
-DB_FILE="./dropbox.db"
+# Use absolute paths to ensure everything is created in the right place
+APP_DIR="/app"
+DB_FILE="${APP_DIR}/data/dropbox.db"
+ALEMBIC_INI="${APP_DIR}/alembic.ini"
+ALEMBIC_DIR="${APP_DIR}/alembic"
+ALEMBIC_ENV="${ALEMBIC_DIR}/env.py"
+ALEMBIC_VERSIONS="${ALEMBIC_DIR}/versions"
 
 # Check if database file exists
 if [ ! -f "$DB_FILE" ]; then
     echo "Database file not found. Creating new database..."
+    mkdir -p "${APP_DIR}/data"
     touch "$DB_FILE"
 fi
 
 # Set PYTHONPATH to include current directory for module imports
-export PYTHONPATH=$PYTHONPATH:.
+export PYTHONPATH=$PYTHONPATH:${APP_DIR}
 
-# Initialize Alembic if not already initialized
-if [ ! -d "./alembic" ]; then
-    echo "Initializing Alembic..."
+# Check if alembic.ini exists, if not create it
+if [ ! -f "$ALEMBIC_INI" ]; then
+    echo "alembic.ini not found. Creating..."
+    # Create a basic alembic.ini file directly instead of using alembic init
+    cat > "$ALEMBIC_INI" << EOF
+[alembic]
+script_location = alembic
+prepend_sys_path = .
+sqlalchemy.url = sqlite:///./data/dropbox.db
 
-    # Create alembic directory
-    mkdir -p ./alembic
+[loggers]
+keys = root,sqlalchemy,alembic
 
-    # Initialize alembic
-    alembic init alembic
+[handlers]
+keys = console
 
-    # Update alembic.ini to use the correct database URL
-    sed -i "s|sqlalchemy.url = .*|sqlalchemy.url = sqlite:///./dropbox.db|" alembic.ini
+[formatters]
+keys = generic
 
-    # Update env.py to import our models
-    cat > ./alembic/env.py << 'EOF'
-from logging.config import fileConfig
+[logger_root]
+level = WARN
+handlers = console
+qualname =
 
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
+[logger_sqlalchemy]
+level = WARN
+handlers =
+qualname = sqlalchemy.engine
 
-from alembic import context
+[logger_alembic]
+level = INFO
+handlers =
+qualname = alembic
 
-# this is the Alembic Config object, which provides
-# access to the values within the .ini file in use.
-config = context.config
+[handler_console]
+class = StreamHandler
+args = (sys.stderr,)
+level = NOTSET
+formatter = generic
 
-# Interpret the config file for Python logging.
-# This line sets up loggers basically.
-fileConfig(config.config_file_name)
-
-# add your model's MetaData object here
-# for 'autogenerate' support
-from db.models import Base
-target_metadata = Base.metadata
-
-def run_migrations_offline():
-    """Run migrations in 'offline' mode."""
-    url = config.get_main_option("sqlalchemy.url")
-    context.configure(
-        url=url,
-        target_metadata=target_metadata,
-        literal_binds=True,
-        dialect_opts={"paramstyle": "named"},
-    )
-
-    with context.begin_transaction():
-        context.run_migrations()
-
-
-def run_migrations_online():
-    """Run migrations in 'online' mode."""
-    connectable = engine_from_config(
-        config.get_section(config.config_ini_section),
-        prefix="sqlalchemy.",
-        poolclass=pool.NullPool,
-    )
-
-    with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
-        )
-
-        with context.begin_transaction():
-            context.run_migrations()
-
-
-if context.is_offline_mode():
-    run_migrations_offline()
-else:
-    run_migrations_online()
+[formatter_generic]
+format = %(levelname)-5.5s [%(name)s] %(message)s
+datefmt = %H:%M:%S
 EOF
-
-    echo "Alembic initialized successfully."
+    echo "Created alembic.ini file at ${ALEMBIC_INI}."
 fi
 
-# Check if alembic versions directory exists
-if [ ! -d "./alembic/versions" ]; then
-    echo "Creating alembic versions directory..."
-    mkdir -p ./alembic/versions
+# Check if alembic directory exists with env.py
+if [ ! -f "$ALEMBIC_ENV" ]; then
+    echo "Initializing alembic directory structure..."
+    # Remove existing alembic directory if it exists
+    rm -rf "$ALEMBIC_DIR"
+    # Initialize alembic
+    cd "$APP_DIR" && alembic init alembic
+    # Update env.py to use our models
+    sed -i "s|target_metadata = None|from db.models import Base\ntarget_metadata = Base.metadata|" "$ALEMBIC_ENV"
+    echo "Alembic directory initialized at ${ALEMBIC_DIR}."
 fi
 
 # Check if we have any migration files
-if [ -z "$(ls -A ./alembic/versions 2>/dev/null)" ]; then
+if [ -z "$(ls -A $ALEMBIC_VERSIONS 2>/dev/null)" ]; then
     echo "No migration files found. Generating initial migration..."
-    alembic revision --autogenerate -m "Create initial tables"
-    echo "Initial migration generated."
+    cd "$APP_DIR" && alembic revision --autogenerate -m "Create initial tables"
+    echo "Initial migration generated in ${ALEMBIC_VERSIONS}."
 fi
 
 # Apply all migrations
 echo "Applying database migrations..."
-alembic upgrade head
+cd "$APP_DIR" && alembic upgrade head
 
 echo "Database setup complete."
 echo "Starting FastAPI application..."
-exec uvicorn server.main:app --host 0.0.0.0 --port 8000
+cd "$APP_DIR" && exec uvicorn server.main:app --host 0.0.0.0 --port 8000
