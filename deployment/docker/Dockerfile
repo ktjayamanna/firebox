@@ -9,9 +9,10 @@ RUN apt-get update && apt-get install -y \
 # Set working directory
 WORKDIR /app
 
-# Create my_dropbox directory for file synchronization
+# Create necessary directories
 RUN mkdir -p /app/my_dropbox
 RUN mkdir -p /app/data
+RUN mkdir -p /tmp/dropbox/chunk
 
 # Copy requirements file
 COPY client/requirements.txt /app/requirements.txt

@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 
 from server.api import router as api_router
 from server.watcher import Watcher
+from config import SYNC_DIR, CHUNK_DIR
 
 # Create FastAPI app
 @asynccontextmanager
@@ -15,13 +16,16 @@ async def lifespan(app):
     watcher.stop()
 
 app = FastAPI(
-    title="Dropbox Client API", 
+    title="Dropbox Client API",
     description="API for Dropbox client synchronization",
     lifespan=lifespan
 )
 
-# Create my_dropbox directory if it doesn't exist
-os.makedirs("/app/my_dropbox", exist_ok=True)
+# Create necessary directories if they don't exist
+os.makedirs(SYNC_DIR, exist_ok=True)
+os.makedirs(CHUNK_DIR, exist_ok=True)
+print(f"Sync directory: {SYNC_DIR}")
+print(f"Chunk directory: {CHUNK_DIR}")
 
 @app.get("/")
 def read_root():

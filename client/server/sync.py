@@ -4,11 +4,15 @@ from datetime import datetime, timezone
 import os
 import uuid
 import hashlib
+from config import CHUNK_DIR
 
 class SyncEngine:
     def __init__(self, db: Session, sync_dir: str = "/app/my_dropbox"):
         self.db = db
         self.sync_dir = sync_dir
+
+        # Ensure chunk directory exists
+        os.makedirs(CHUNK_DIR, exist_ok=True)
 
     def upload_file(self, file_path: str, folder_id: str = None) -> str:
         """
@@ -64,10 +68,10 @@ class SyncEngine:
         if not chunks:
             return False
 
-        # Reassemble file from chunks
+        # Reassemble file from chunks stored in the chunk directory
         with open(destination_path, 'wb') as f:
             for chunk in chunks:
-                chunk_path = os.path.join(self.sync_dir, f"{chunk.chunk_id}.chunk")
+                chunk_path = os.path.join(CHUNK_DIR, f"{chunk.chunk_id}.chunk")
                 if os.path.exists(chunk_path):
                     with open(chunk_path, 'rb') as chunk_file:
                         f.write(chunk_file.read())
@@ -96,8 +100,8 @@ class SyncEngine:
                 # Calculate fingerprint (hash) of chunk
                 fingerprint = hashlib.sha256(chunk_data).hexdigest()
 
-                # Save chunk to disk
-                chunk_path = os.path.join(self.sync_dir, f"{chunk_id}.chunk")
+                # Save chunk to the dedicated chunk directory (not in sync dir)
+                chunk_path = os.path.join(CHUNK_DIR, f"{chunk_id}.chunk")
                 with open(chunk_path, 'wb') as chunk_file:
                     chunk_file.write(chunk_data)
 

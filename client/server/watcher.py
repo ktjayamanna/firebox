@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from db.engine import SessionLocal
 from server.sync import SyncEngine
 from typing import Callable, Dict, Any
+from config import SYNC_DIR
 
 class EventHandler(pyinotify.ProcessEvent):
     def __init__(self, sync_dir: str, callback: Callable = None):
@@ -80,12 +81,12 @@ class EventHandler(pyinotify.ProcessEvent):
                 self.callback('move_to', event.pathname)
 
 class Watcher:
-    def __init__(self, sync_dir: str = "/app/my_dropbox"):
+    def __init__(self, sync_dir: str = SYNC_DIR):
         """
         Initialize the watcher
 
         Args:
-            sync_dir: Directory to watch
+            sync_dir: Directory to watch (defaults to SYNC_DIR from config)
         """
         self.sync_dir = sync_dir
         self.wm = pyinotify.WatchManager()
