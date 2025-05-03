@@ -9,16 +9,17 @@ class FilesMetaData(Base):
     __tablename__ = 'files_metadata'
 
     file_id = Column(String, primary_key=True)
-    folder_id = Column(String, nullable=True)
     file_type = Column(String, nullable=False)
-    file_path = Column(String, nullable=False)  # Added file path field
-    file_hash = Column(String, nullable=True)   # Added file hash for deduplication
+    file_path = Column(String, nullable=False, unique=True)  # Full path to the file
+    parent_path = Column(String, nullable=True)  # Path to the parent directory
+    file_name = Column(String, nullable=False)   # Just the filename
+    file_hash = Column(String, nullable=True)    # Hash for deduplication
 
     # Relationship with Chunks
     chunks = relationship("Chunks", back_populates="file", cascade="all, delete-orphan")
 
     def __repr__(self):
-        return f"<FilesMetaData(file_id='{self.file_id}', file_path='{self.file_path}', folder_id='{self.folder_id}', file_type='{self.file_type}')>"
+        return f"<FilesMetaData(file_id='{self.file_id}', file_path='{self.file_path}', file_name='{self.file_name}', file_type='{self.file_type}')>"
 
 class Chunks(Base):
     __tablename__ = 'chunks'
