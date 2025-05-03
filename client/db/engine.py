@@ -8,7 +8,12 @@ SQLALCHEMY_DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite:///./data/dropb
 
 # Create SQLAlchemy engine
 engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
+    SQLALCHEMY_DATABASE_URL, 
+    connect_args={"check_same_thread": False},
+    pool_size=20,               # Default number of connections to maintain
+    max_overflow=10,            # Allow up to 10 connections beyond pool_size
+    pool_timeout=30,            # Seconds to wait before timing out on pool checkout
+    pool_recycle=3600           # Recycle connections after 1 hour
 )
 
 # Create SessionLocal class

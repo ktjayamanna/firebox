@@ -4,7 +4,6 @@ from datetime import datetime
 import os
 import uuid
 import hashlib
-from typing import List, Dict, Any
 
 class SyncEngine:
     def __init__(self, db: Session, sync_dir: str = "/app/my_dropbox"):
@@ -106,8 +105,8 @@ class SyncEngine:
                 chunk = Chunks(
                     chunk_id=chunk_id,
                     file_id=file_id,
-                    created_at=datetime.utcnow(),
-                    last_synced=datetime.utcnow(),
+                    created_at=datetime.now(datetime.timezone.utc),
+                    last_synced=datetime.now(datetime.timezone.utc),
                     fingerprint=fingerprint
                 )
                 

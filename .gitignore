@@ -4,3 +4,4 @@
 */.env.*
 # pycache
 __pycache__
+data

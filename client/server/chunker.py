@@ -1,6 +1,5 @@
-import os
 import hashlib
-from typing import List, Dict, Any, Generator, Tuple
+from typing import List, Generator, Tuple
 
 class Chunker:
     def __init__(self, chunk_size: int = 5 * 1024 * 1024):

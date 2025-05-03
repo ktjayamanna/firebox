@@ -1,3 +1,4 @@
 *.png
 sys.png
 *.jpg
+data/*

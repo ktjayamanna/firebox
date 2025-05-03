@@ -1,12 +1,24 @@
-from fastapi import FastAPI, Depends, HTTPException
-from sqlalchemy.orm import Session
-from db.engine import get_db
-from db.models import FilesMetaData, Chunks
+from fastapi import FastAPI
 import os
-import threading
+from contextlib import asynccontextmanager
+
+from server.api import router as api_router
+from server.watcher import Watcher
 
 # Create FastAPI app
-app = FastAPI(title="Dropbox Client API", description="API for Dropbox client synchronization")
+@asynccontextmanager
+async def lifespan(app):
+    # Start the file watcher when the application starts
+    watcher.start()
+    yield
+    # Stop the file watcher when the application shuts down
+    watcher.stop()
+
+app = FastAPI(
+    title="Dropbox Client API", 
+    description="API for Dropbox client synchronization",
+    lifespan=lifespan
+)
 
 # Create my_dropbox directory if it doesn't exist
 os.makedirs("/app/my_dropbox", exist_ok=True)
@@ -19,22 +31,8 @@ def read_root():
 def health_check():
     return {"status": "healthy"}
 
-# Import routes
-from server.api import router as api_router
-from server.watcher import Watcher
-
 # Include routers
 app.include_router(api_router, prefix="/api")
 
 # Start file watcher
 watcher = Watcher()
-
-@app.on_event("startup")
-def startup_event():
-    """Start the file watcher when the application starts"""
-    watcher.start()
-
-@app.on_event("shutdown")
-def shutdown_event():
-    """Stop the file watcher when the application shuts down"""
-    watcher.stop()
