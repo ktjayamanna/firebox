@@ -4,7 +4,7 @@ import os
 SYNC_DIR = os.environ.get("SYNC_DIR", "/app/my_dropbox")
 
 # Chunk storage directory (separate from sync directory)
-CHUNK_DIR = os.environ.get("CHUNK_DIR", "/tmp/dropbox/chunk")
+CHUNK_DIR = os.environ.get("CHUNK_DIR", "/app/tmp/chunk")
 
 # Database settings
 DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite:///./dropbox.db")

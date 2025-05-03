@@ -24,8 +24,21 @@ app = FastAPI(
 # Create necessary directories if they don't exist
 os.makedirs(SYNC_DIR, exist_ok=True)
 os.makedirs(CHUNK_DIR, exist_ok=True)
-print(f"Sync directory: {SYNC_DIR}")
-print(f"Chunk directory: {CHUNK_DIR}")
+
+# Verify directories exist and are writable
+print(f"Sync directory: {SYNC_DIR} (exists: {os.path.exists(SYNC_DIR)}, writable: {os.access(SYNC_DIR, os.W_OK)})")
+print(f"Chunk directory: {CHUNK_DIR} (exists: {os.path.exists(CHUNK_DIR)}, writable: {os.access(CHUNK_DIR, os.W_OK)})")
+
+# Create a test file in the chunk directory to verify it's working
+test_file_path = os.path.join(CHUNK_DIR, "test_file.txt")
+try:
+    with open(test_file_path, 'w') as f:
+        f.write("Test file to verify chunk directory is working")
+    print(f"Successfully created test file at {test_file_path}")
+    os.remove(test_file_path)
+    print(f"Successfully removed test file at {test_file_path}")
+except Exception as e:
+    print(f"Error accessing chunk directory: {e}")
 
 @app.get("/")
 def read_root():

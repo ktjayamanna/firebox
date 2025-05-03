@@ -12,7 +12,7 @@ WORKDIR /app
 # Create necessary directories
 RUN mkdir -p /app/my_dropbox
 RUN mkdir -p /app/data
-RUN mkdir -p /tmp/dropbox/chunk
+RUN mkdir -p /app/tmp/chunk
 
 # Copy requirements file
 COPY client/requirements.txt /app/requirements.txt

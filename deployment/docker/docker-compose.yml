@@ -16,7 +16,7 @@ services:
       - ../../client/config.py:/app/config.py
       - dropbox-data:/app/my_dropbox
       - db-data:/app/data
-      - chunk-data:/tmp/dropbox/chunk
+      - chunk-data:/app/tmp/chunk
     environment:
       - PYTHONPATH=/app
       - DATABASE_URL=sqlite:///./data/dropbox.db

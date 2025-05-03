@@ -69,12 +69,17 @@ class SyncEngine:
             return False
 
         # Reassemble file from chunks stored in the chunk directory
+        print(f"Reassembling file from chunks in {CHUNK_DIR}")
         with open(destination_path, 'wb') as f:
             for chunk in chunks:
                 chunk_path = os.path.join(CHUNK_DIR, f"{chunk.chunk_id}.chunk")
+                print(f"Looking for chunk at: {chunk_path}")
                 if os.path.exists(chunk_path):
+                    print(f"Found chunk at: {chunk_path}")
                     with open(chunk_path, 'rb') as chunk_file:
                         f.write(chunk_file.read())
+                else:
+                    print(f"Warning: Chunk not found at {chunk_path}")
 
         return True
 
@@ -102,8 +107,13 @@ class SyncEngine:
 
                 # Save chunk to the dedicated chunk directory (not in sync dir)
                 chunk_path = os.path.join(CHUNK_DIR, f"{chunk_id}.chunk")
-                with open(chunk_path, 'wb') as chunk_file:
-                    chunk_file.write(chunk_data)
+                print(f"Saving chunk to: {chunk_path}")
+                try:
+                    with open(chunk_path, 'wb') as chunk_file:
+                        chunk_file.write(chunk_data)
+                    print(f"Successfully saved chunk to {chunk_path}")
+                except Exception as e:
+                    print(f"Error saving chunk to {chunk_path}: {e}")
 
                 # Create chunk metadata
                 chunk = Chunks(
