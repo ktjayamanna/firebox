@@ -8,8 +8,10 @@
 .print '\n=== FILES METADATA TABLE (LIMITED TO 5) ===\n'
 SELECT
     file_id AS "File ID",
+    file_path AS "File Path",
     folder_id AS "Folder ID",
-    file_type AS "File Type"
+    file_type AS "File Type",
+    substr(file_hash, 1, 10) || '...' AS "File Hash (truncated)"
 FROM
     files_metadata
 LIMIT 5;

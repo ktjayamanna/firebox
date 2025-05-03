@@ -1,10 +1,8 @@
 import pyinotify
 import os
-import threading
-from sqlalchemy.orm import Session
 from db.engine import SessionLocal
 from server.sync import SyncEngine
-from typing import Callable, Dict, Any
+from typing import Callable
 from config import SYNC_DIR
 
 class EventHandler(pyinotify.ProcessEvent):
@@ -97,13 +95,16 @@ class Watcher:
 
     def start(self):
         """
-        Start watching the directory
+        Start watching the directory and scan existing files
         """
         if self.running:
             return
 
         # Create directory if it doesn't exist
         os.makedirs(self.sync_dir, exist_ok=True)
+
+        # Scan existing files in the sync directory
+        self.scan_existing_files()
 
         # Set up inotify
         mask = pyinotify.IN_CREATE | pyinotify.IN_MODIFY | pyinotify.IN_DELETE | pyinotify.IN_MOVED_FROM | pyinotify.IN_MOVED_TO
@@ -114,6 +115,24 @@ class Watcher:
         self.notifier.start()
         self.running = True
         print(f"Started watching directory: {self.sync_dir}")
+
+    def scan_existing_files(self):
+        """
+        Scan existing files in the sync directory and process them
+        """
+        print(f"Scanning existing files in: {self.sync_dir}")
+
+        # Get a new database session
+        db = SessionLocal()
+        try:
+            # Create sync engine
+            sync_engine = SyncEngine(db, self.sync_dir)
+
+            # Scan the sync directory
+            sync_engine.scan_sync_directory()
+
+        finally:
+            db.close()
 
     def stop(self):
         """
