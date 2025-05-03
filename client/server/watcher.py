@@ -1,6 +1,8 @@
 import pyinotify
 import os
+import uuid
 from db.engine import SessionLocal
+from db.models import FilesMetaData, Chunks, Folders
 from server.sync import SyncEngine
 from typing import Callable
 from config import SYNC_DIR
@@ -135,6 +137,7 @@ class Watcher:
     def scan_existing_files(self):
         """
         Scan existing files in the sync directory and process them
+        Also clean up any orphaned chunks
         """
         print(f"Scanning existing files in: {self.sync_dir}")
 
@@ -146,6 +149,9 @@ class Watcher:
 
             # Scan the sync directory
             sync_engine.scan_sync_directory()
+
+            # Clean up orphaned chunks
+            sync_engine.cleanup_orphaned_chunks()
 
         finally:
             db.close()
@@ -184,37 +190,35 @@ class Watcher:
                 print(f"Uploaded file: {path} with ID: {file_id}")
 
             elif event_type == 'create_dir':
-                # Create directory entry
-                dir_id = str(uuid.uuid4())
-                dir_name = os.path.basename(path)
-                parent_path = os.path.dirname(path)
+                # Skip if this is the sync directory itself
+                if path == self.sync_dir:
+                    return
 
-                # Check if directory already exists in database
-                existing_dir = db.query(FilesMetaData).filter(
-                    FilesMetaData.file_path == path,
-                    FilesMetaData.file_type == "directory"
-                ).first()
+                # Create directory entry and ensure parent directories exist
+                folder_id = sync_engine._ensure_folder_tree(path)
+                print(f"Added directory to database: {path} with ID: {folder_id}")
 
-                if not existing_dir:
-                    # Create new directory entry
-                    dir_metadata = FilesMetaData(
-                        file_id=dir_id,
-                        file_type="directory",
-                        file_path=path,
-                        parent_path=parent_path,
-                        file_name=dir_name,
-                        file_hash=None
-                    )
+                # Scan the directory for any existing files
+                print(f"Scanning new directory: {path}")
+                for root, _, files in os.walk(path):
+                    for filename in files:
+                        file_path = os.path.join(root, filename)
 
-                    db.add(dir_metadata)
-                    db.commit()
-                    print(f"Added directory to database: {path}")
+                        # Skip hidden files
+                        if filename.startswith('.'):
+                            continue
+
+                        try:
+                            # Process the file
+                            file_id = sync_engine.upload_file(file_path)
+                            print(f"Processed file in new directory: {file_path} with ID: {file_id}")
+                        except Exception as e:
+                            print(f"Error processing file {file_path}: {e}")
 
             elif event_type == 'delete':
                 # Delete file entry and its chunks
                 file_metadata = db.query(FilesMetaData).filter(
-                    FilesMetaData.file_path == path,
-                    FilesMetaData.file_type != "directory"
+                    FilesMetaData.file_path == path
                 ).first()
 
                 if file_metadata:
@@ -225,28 +229,33 @@ class Watcher:
                     db.commit()
                     print(f"Deleted file from database: {path}")
 
+                    # Clean up orphaned chunks
+                    sync_engine.cleanup_orphaned_chunks()
+
             elif event_type == 'delete_dir':
                 # Delete directory entry and all its contents
-                dir_metadata = db.query(FilesMetaData).filter(
-                    FilesMetaData.file_path == path,
-                    FilesMetaData.file_type == "directory"
+                folder = db.query(Folders).filter(
+                    Folders.folder_path == path
                 ).first()
 
-                if dir_metadata:
-                    # Delete directory
-                    db.delete(dir_metadata)
+                if folder:
+                    # Get all files in this folder and its subfolders
+                    files_to_delete = db.query(FilesMetaData).filter(
+                        FilesMetaData.folder_id == folder.folder_id
+                    ).all()
 
-                    # Delete all files and subdirectories under this directory
-                    for item in db.query(FilesMetaData).filter(
-                        FilesMetaData.file_path.like(f"{path}/%")
-                    ).all():
-                        if item.file_type != "directory":
-                            # Delete chunks for files
-                            db.query(Chunks).filter(Chunks.file_id == item.file_id).delete()
-                        db.delete(item)
+                    # Delete chunks for all files
+                    for file in files_to_delete:
+                        db.query(Chunks).filter(Chunks.file_id == file.file_id).delete()
+                        db.delete(file)
 
+                    # Delete the folder (cascade will delete subfolders)
+                    db.delete(folder)
                     db.commit()
                     print(f"Deleted directory and its contents from database: {path}")
+
+                    # Clean up orphaned chunks
+                    sync_engine.cleanup_orphaned_chunks()
 
             # Note: Move events would need additional handling
 

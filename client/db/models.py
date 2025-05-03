@@ -5,17 +5,37 @@ from datetime import datetime, timezone
 
 Base = declarative_base()
 
+class Folders(Base):
+    __tablename__ = 'folders'
+
+    folder_id = Column(String, primary_key=True)
+    folder_path = Column(String, nullable=False, unique=True)  # Full path to the folder
+    folder_name = Column(String, nullable=False)  # Just the folder name
+    parent_folder_id = Column(String, ForeignKey('folders.folder_id'), nullable=True)  # Parent folder ID (null for root)
+
+    # Relationships
+    files = relationship("FilesMetaData", back_populates="folder", cascade="all, delete-orphan")
+    subfolders = relationship("Folders",
+                             backref="parent_folder",
+                             remote_side=[folder_id],
+                             cascade="all",
+                             single_parent=True)
+
+    def __repr__(self):
+        return f"<Folders(folder_id='{self.folder_id}', folder_path='{self.folder_path}', folder_name='{self.folder_name}')>"
+
 class FilesMetaData(Base):
     __tablename__ = 'files_metadata'
 
     file_id = Column(String, primary_key=True)
     file_type = Column(String, nullable=False)
     file_path = Column(String, nullable=False, unique=True)  # Full path to the file
-    parent_path = Column(String, nullable=True)  # Path to the parent directory
     file_name = Column(String, nullable=False)   # Just the filename
     file_hash = Column(String, nullable=True)    # Hash for deduplication
+    folder_id = Column(String, ForeignKey('folders.folder_id'), nullable=False)  # Folder containing this file
 
-    # Relationship with Chunks
+    # Relationships
+    folder = relationship("Folders", back_populates="files")
     chunks = relationship("Chunks", back_populates="file", cascade="all, delete-orphan")
 
     def __repr__(self):
@@ -27,7 +47,6 @@ class Chunks(Base):
     chunk_id = Column(String, nullable=False)
     file_id = Column(String, ForeignKey('files_metadata.file_id'), nullable=False)
     __table_args__ = (PrimaryKeyConstraint('chunk_id', 'file_id'),)
-    file_id = Column(String, ForeignKey('files_metadata.file_id'), nullable=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     last_synced = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     fingerprint = Column(String, nullable=False)

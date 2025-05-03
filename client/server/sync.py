@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from db.models import FilesMetaData, Chunks
+from db.models import FilesMetaData, Chunks, Folders
 from datetime import datetime, timezone
 import os
 import uuid
@@ -33,7 +33,7 @@ class SyncEngine:
                 hash_obj.update(chunk)
         return hash_obj.hexdigest()
 
-    def find_existing_file(self, file_path: str, file_hash: str) -> Optional[FilesMetaData]:
+    def find_existing_file(self, file_path: str, file_hash: str = None) -> Optional[FilesMetaData]:
         """
         Check if a file with the same path already exists
 
@@ -53,6 +53,37 @@ class SyncEngine:
 
         return existing_file
 
+    def cleanup_orphaned_chunks(self):
+        """
+        Clean up orphaned chunks that are no longer associated with any file
+        """
+        print("Cleaning up orphaned chunks...")
+
+        # Get all chunk IDs from the database
+        db_chunks = self.db.query(Chunks.chunk_id).all()
+        db_chunk_ids = set([chunk[0] for chunk in db_chunks])
+
+        # Get all chunk files from the chunk directory
+        chunk_files = []
+        if os.path.exists(CHUNK_DIR):
+            chunk_files = [f for f in os.listdir(CHUNK_DIR) if f.endswith('.chunk')]
+
+        # Find orphaned chunk files (files that exist on disk but not in the database)
+        orphaned_count = 0
+        for chunk_file in chunk_files:
+            chunk_id = chunk_file.replace('.chunk', '')
+            if chunk_id not in db_chunk_ids:
+                # This is an orphaned chunk, delete it
+                chunk_path = os.path.join(CHUNK_DIR, chunk_file)
+                try:
+                    os.remove(chunk_path)
+                    print(f"Deleted orphaned chunk: {chunk_path}")
+                    orphaned_count += 1
+                except Exception as e:
+                    print(f"Error deleting orphaned chunk {chunk_path}: {e}")
+
+        print(f"Cleanup complete. Deleted {orphaned_count} orphaned chunks.")
+
     def upload_file(self, file_path: str) -> str:
         """
         Upload a file to the sync directory and create metadata
@@ -71,8 +102,8 @@ class SyncEngine:
         file_name = os.path.basename(file_path)
         parent_path = os.path.dirname(file_path)
 
-        # Ensure parent directory exists in the database
-        self.ensure_parent_directories(parent_path)
+        # Ensure parent directory exists in the database and get its folder_id
+        folder_id = self.ensure_parent_directories(parent_path)
 
         # Calculate file hash for content tracking
         file_hash = self.calculate_file_hash(file_path)
@@ -89,14 +120,18 @@ class SyncEngine:
             print(f"File already exists at path {file_path} with ID: {existing_file.file_id}. Updating...")
             file_id = existing_file.file_id
 
+            # Save the old hash for comparison
+            old_hash = existing_file.file_hash
+
             # Update metadata if needed
             existing_file.file_type = file_type
-            existing_file.parent_path = parent_path
+            existing_file.folder_id = folder_id
             existing_file.file_name = file_name
             existing_file.file_hash = file_hash
+            self.db.commit()
 
             # Check if content has changed by comparing hash
-            if existing_file.file_hash != file_hash:
+            if old_hash != file_hash:
                 print(f"File content has changed. Updating chunks...")
                 # Delete existing chunks only if content has changed
                 self.db.query(Chunks).filter(Chunks.file_id == file_id).delete()
@@ -113,7 +148,7 @@ class SyncEngine:
                 file_id=file_id,
                 file_type=file_type,
                 file_path=file_path,
-                parent_path=parent_path,
+                folder_id=folder_id,
                 file_name=file_name,
                 file_hash=file_hash
             )
@@ -125,52 +160,145 @@ class SyncEngine:
 
         return file_id
 
-    def ensure_parent_directories(self, directory_path: str) -> None:
+    def find_existing_folder(self, folder_path: str) -> Optional[Folders]:
+        """
+        Check if a folder with the same path already exists
+
+        Args:
+            folder_path: Path to the folder
+
+        Returns:
+            Optional[Folders]: Existing folder if found, None otherwise
+        """
+        existing_folder = self.db.query(Folders).filter(
+            Folders.folder_path == folder_path
+        ).first()
+
+        return existing_folder
+
+    def ensure_parent_directories(self, directory_path: str) -> str:
         """
         Ensure that all parent directories in the path are tracked in the database
 
         Args:
             directory_path: Path to the directory
+
+        Returns:
+            str: Folder ID of the parent directory
+        """
+        # Skip if this is the sync directory itself or not within it
+        if directory_path == self.sync_dir or not directory_path.startswith(self.sync_dir):
+            # Return the root folder ID
+            root_folder = self._get_or_create_root_folder()
+            return root_folder.folder_id
+
+        # For file paths, we need to ensure the parent directory exists
+        parent_dir = os.path.dirname(directory_path)
+
+        # If the parent is the sync directory, return the root folder ID
+        if parent_dir == self.sync_dir:
+            root_folder = self._get_or_create_root_folder()
+            return root_folder.folder_id
+
+        # Ensure all parent directories exist in the database
+        return self._ensure_folder_tree(parent_dir)
+
+    def _get_or_create_root_folder(self) -> Folders:
+        """
+        Get or create the root folder (sync directory)
+
+        Returns:
+            Folders: Root folder
+        """
+        root_folder = self.db.query(Folders).filter(
+            Folders.folder_path == self.sync_dir
+        ).first()
+
+        if not root_folder:
+            # Create root folder
+            root_id = str(uuid.uuid4())
+            root_name = os.path.basename(self.sync_dir)
+
+            # Create the physical directory if it doesn't exist
+            if not os.path.exists(self.sync_dir):
+                os.makedirs(self.sync_dir, exist_ok=True)
+                print(f"Created physical directory: {self.sync_dir}")
+
+            root_folder = Folders(
+                folder_id=root_id,
+                folder_path=self.sync_dir,
+                folder_name=root_name,
+                parent_folder_id=None  # Root has no parent
+            )
+
+            self.db.add(root_folder)
+            self.db.commit()
+            print(f"Added root folder to database: {self.sync_dir}")
+
+        return root_folder
+
+    def _ensure_folder_tree(self, folder_path: str) -> str:
+        """
+        Recursively ensure that a folder and all its parent folders exist in the database
+
+        Args:
+            folder_path: Path to the folder
+
+        Returns:
+            str: Folder ID of the created/existing folder
         """
         # Skip if this is the sync directory itself
-        if directory_path == self.sync_dir or not directory_path.startswith(self.sync_dir):
-            return
+        if folder_path == self.sync_dir:
+            root_folder = self._get_or_create_root_folder()
+            return root_folder.folder_id
 
-        # Get all parent directories that need to be created
-        parts = os.path.relpath(directory_path, self.sync_dir).split(os.sep)
-        current_path = self.sync_dir
+        # Check if folder already exists
+        existing_folder = self.find_existing_folder(folder_path)
+        if existing_folder:
+            return existing_folder.folder_id
 
-        for part in parts:
-            if not part:  # Skip empty parts
-                continue
+        # Ensure parent folder exists first (recursive)
+        parent_dir = os.path.dirname(folder_path)
+        if parent_dir == self.sync_dir:
+            parent_folder_id = self._get_or_create_root_folder().folder_id
+        else:
+            parent_folder_id = self._ensure_folder_tree(parent_dir)
 
-            current_path = os.path.join(current_path, part)
+        # Now create this folder in the database
+        return self._create_folder_in_db(folder_path, parent_folder_id)
 
-            # Check if this directory is already in the database
-            existing_dir = self.db.query(FilesMetaData).filter(
-                FilesMetaData.file_path == current_path,
-                FilesMetaData.file_type == "directory"
-            ).first()
+    def _create_folder_in_db(self, folder_path: str, parent_folder_id: str) -> str:
+        """
+        Create a folder in the database
 
-            if not existing_dir:
-                # Create directory entry
-                dir_id = str(uuid.uuid4())
-                parent_path = os.path.dirname(current_path)
-                dir_name = os.path.basename(current_path)
+        Args:
+            folder_path: Path to the folder
+            parent_folder_id: ID of the parent folder
 
-                dir_metadata = FilesMetaData(
-                    file_id=dir_id,
-                    file_type="directory",
-                    file_path=current_path,
-                    parent_path=parent_path,
-                    file_name=dir_name,
-                    file_hash=None  # Directories don't have content hashes
-                )
+        Returns:
+            str: Folder ID of the created folder
+        """
+        # Create folder entry
+        folder_id = str(uuid.uuid4())
+        folder_name = os.path.basename(folder_path)
 
-                self.db.add(dir_metadata)
-                print(f"Added directory to database: {current_path}")
+        # Create the physical directory if it doesn't exist
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path, exist_ok=True)
+            print(f"Created physical directory: {folder_path}")
 
+        folder = Folders(
+            folder_id=folder_id,
+            folder_path=folder_path,
+            folder_name=folder_name,
+            parent_folder_id=parent_folder_id
+        )
+
+        self.db.add(folder)
         self.db.commit()
+        print(f"Added folder to database: {folder_path}")
+
+        return folder_id
 
     def download_file(self, file_id: str, destination_path: str) -> bool:
         """
@@ -220,35 +348,13 @@ class SyncEngine:
         processed_count = 0
         skipped_count = 0
 
-        # First, ensure the root sync directory is in the database
-        root_dir = self.db.query(FilesMetaData).filter(
-            FilesMetaData.file_path == self.sync_dir,
-            FilesMetaData.file_type == "directory"
-        ).first()
-
-        if not root_dir:
-            # Create root directory entry
-            dir_id = str(uuid.uuid4())
-            dir_name = os.path.basename(self.sync_dir)
-            parent_path = os.path.dirname(self.sync_dir)
-
-            root_dir = FilesMetaData(
-                file_id=dir_id,
-                file_type="directory",
-                file_path=self.sync_dir,
-                parent_path=parent_path,
-                file_name=dir_name,
-                file_hash=None
-            )
-
-            self.db.add(root_dir)
-            self.db.commit()
-            print(f"Added root directory to database: {self.sync_dir}")
-            dir_count += 1
+        # Ensure root folder exists
+        root_folder = self._get_or_create_root_folder()
+        dir_count += 1
 
         # Process all directories and files
         for root, dirs, files in os.walk(self.sync_dir):
-            # Process directories first
+            # Process directories
             for dirname in dirs:
                 dir_path = os.path.join(root, dirname)
 
@@ -256,29 +362,9 @@ class SyncEngine:
                 if dirname.startswith('.'):
                     continue
 
-                # Ensure directory is in the database
-                existing_dir = self.db.query(FilesMetaData).filter(
-                    FilesMetaData.file_path == dir_path,
-                    FilesMetaData.file_type == "directory"
-                ).first()
-
-                if not existing_dir:
-                    # Create directory entry
-                    dir_id = str(uuid.uuid4())
-                    parent_path = os.path.dirname(dir_path)
-
-                    dir_metadata = FilesMetaData(
-                        file_id=dir_id,
-                        file_type="directory",
-                        file_path=dir_path,
-                        parent_path=parent_path,
-                        file_name=dirname,
-                        file_hash=None
-                    )
-
-                    self.db.add(dir_metadata)
-                    print(f"Added directory to database: {dir_path}")
-                    dir_count += 1
+                # Process this directory and ensure it's in the database
+                folder_id = self._ensure_folder_tree(dir_path)
+                dir_count += 1
 
             # Process files
             for filename in files:
@@ -313,6 +399,9 @@ class SyncEngine:
 
         # Commit any remaining changes
         self.db.commit()
+
+        # Clean up orphaned chunks
+        self.cleanup_orphaned_chunks()
 
         print(f"Scan complete. Found {file_count} files and {dir_count} directories.")
         print(f"Processed {processed_count} files, skipped {skipped_count} unchanged files.")
