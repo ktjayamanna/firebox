@@ -1,0 +1,20 @@
+version: '3'
+
+services:
+  dropbox-client:
+    build:
+      context: ../../
+      dockerfile: deployment/docker/Dockerfile
+    container_name: dropbox-client
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../../client:/app
+      - dropbox-data:/app/my_dropbox
+    environment:
+      - PYTHONPATH=/app
+    restart: unless-stopped
+
+volumes:
+  dropbox-data:
+    driver: local
