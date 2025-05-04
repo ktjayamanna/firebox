@@ -87,8 +87,8 @@ else
     echo -e "${RED}Not accessible${NC}"
 fi
 
-echo -e "\n${YELLOW}To start services:${NC} ./start_aws_services.sh"
-echo -e "${YELLOW}To stop services:${NC} ./stop_aws_services.sh"
-echo -e "${YELLOW}To stop and remove volumes:${NC} ./stop_aws_services.sh -v"
+echo -e "\n${YELLOW}To start services:${NC} ./deployment_scripts/start_aws_services.sh"
+echo -e "${YELLOW}To stop services:${NC} ./deployment_scripts/stop_aws_services.sh"
+echo -e "${YELLOW}To stop and remove volumes:${NC} ./deployment_scripts/stop_aws_services.sh -v"
 
 echo -e "${BLUE}=========================================${NC}"
