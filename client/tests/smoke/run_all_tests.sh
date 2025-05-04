@@ -67,8 +67,7 @@ echo -e "${BLUE}=========================================${NC}"
 echo -e "${YELLOW}Checking Docker container status...${NC}"
 if ! docker ps | grep -q $CONTAINER_NAME; then
     echo -e "${YELLOW}Container '$CONTAINER_NAME' is not running. Starting it now...${NC}"
-    cd deployment/docker && docker-compose up -d
-    cd ../../
+    ./client/scripts/bash/start_client_container.sh
 
     # Wait for container to start and initialize
     echo -e "${YELLOW}Waiting for container to start and initialize (10 seconds)...${NC}"

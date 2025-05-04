@@ -4,7 +4,7 @@ services:
   dropbox-client:
     build:
       context: ../../
-      dockerfile: deployment/docker/Dockerfile
+      dockerfile: deployment/client/Dockerfile
     container_name: dropbox-client
     ports:
       - "8000:8000"

@@ -24,10 +24,11 @@ RUN pip install --no-cache-dir -r /app/requirements.txt
 COPY client/ /app/
 
 # Make start script executable
-RUN chmod +x /app/scripts/bash/start.sh
+COPY deployment/client/deployment_scripts/start.sh /app/start.sh
+RUN chmod +x /app/start.sh
 
 # Expose the FastAPI port
 EXPOSE 8000
 
 # Command to run the application
-CMD ["/bin/bash", "/app/scripts/bash/start.sh"]
+CMD ["/bin/bash", "/app/start.sh"]

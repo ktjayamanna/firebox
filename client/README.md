@@ -54,8 +54,7 @@ client/
 The client is designed to run in a Docker container. Use the provided Docker Compose file to start the client:
 
 ```bash
-cd deployment/docker
-docker-compose up -d
+./client/scripts/bash/start_client_container.sh
 ```
 
 This will start the client container with the FastAPI server running on port 8000.

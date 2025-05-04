@@ -39,8 +39,7 @@ For more information about the test suite, see [client/tests/README.md](client/t
 
 1. Start the Docker container:
    ```bash
-   cd deployment/docker
-   docker-compose up -d
+   ./client/scripts/bash/start_client_container.sh
    ```
 
 2. Access the API at http://localhost:8000

@@ -89,7 +89,7 @@ echo -e "${BLUE}=========================================${NC}"
 # Check if container is running
 if ! docker ps | grep -q $CONTAINER_NAME; then
     echo -e "${RED}Error: $CONTAINER_NAME container is not running${NC}"
-    echo -e "Please start the container first with: cd deployment/docker && docker-compose up -d"
+    echo -e "Please start the container first with: ./client/scripts/bash/start_client_container.sh"
     exit 1
 fi
 

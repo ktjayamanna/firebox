@@ -1,5 +1,5 @@
 #!/bin/bash
-# Script to spin up the Dropbox client container
+# Script to start the Dropbox client container
 
 # Set text colors for better readability
 GREEN='\033[0;32m'
@@ -11,8 +11,8 @@ echo -e "${GREEN}Starting Dropbox Client Container${NC}"
 echo -e "${BLUE}=========================================${NC}"
 
 # Navigate to the docker directory
-cd deployment/docker || {
-    echo "Error: deployment/docker directory not found"
+cd deployment/client || {
+    echo "Error: deployment/client directory not found"
     exit 1
 }
 
