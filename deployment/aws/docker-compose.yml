@@ -36,15 +36,18 @@ services:
       exit 0
       "
 
-  # DynamoDB Local
+  # DynamoDB Local (in-memory mode)
   dynamodb-local:
     image: amazon/dynamodb-local
     container_name: aws-dynamodb
     ports:
       - "8002:8000"
-    command: "-jar DynamoDBLocal.jar -sharedDb -dbPath /home/dynamodblocal/data"
-    volumes:
-      - dynamodb-data:/home/dynamodblocal/data
+    command: "-jar DynamoDBLocal.jar -sharedDb -inMemory"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/shell/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
     restart: unless-stopped
 
   # DynamoDB setup (create tables)
@@ -94,6 +97,4 @@ services:
 
 volumes:
   minio-data:
-    driver: local
-  dynamodb-data:
     driver: local
