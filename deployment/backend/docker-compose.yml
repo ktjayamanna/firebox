@@ -12,10 +12,10 @@ services:
       - AWS_ACCESS_KEY_ID=minioadmin
       - AWS_SECRET_ACCESS_KEY=minioadmin
       - AWS_REGION=us-east-1
-      - S3_ENDPOINT=http://minio:9000
+      - S3_ENDPOINT=http://aws-s3:9000
       - S3_BUCKET_NAME=dropbox-chunks
       - S3_USE_SSL=False
-      - DYNAMODB_HOST=http://dynamodb-local:8000
+      - DYNAMODB_HOST=http://aws-dynamodb:8000
       - DYNAMODB_REGION=us-east-1
       - API_HOST=0.0.0.0
       - API_PORT=8001
@@ -35,11 +35,11 @@ services:
       /bin/sh -c "
       echo 'Checking if AWS services are available...' &&
       apk add --no-cache curl &&
-      until curl -s http://minio:9000/minio/health/live; do
+      until curl -s http://aws-s3:9000/minio/health/live; do
         echo 'Waiting for MinIO to be available...';
         sleep 5;
       done &&
-      until curl -s http://dynamodb-local:8000; do
+      until curl -s http://aws-dynamodb:8000; do
         echo 'Waiting for DynamoDB to be available...';
         sleep 5;
       done &&
