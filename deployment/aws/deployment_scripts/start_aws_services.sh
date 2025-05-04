@@ -43,7 +43,7 @@ if [ $? -eq 0 ]; then
     echo -e "    Username: minioadmin"
     echo -e "    Password: minioadmin"
     echo -e "  - S3 API: ${GREEN}http://localhost:8080/s3/${NC}"
-    echo -e "  - DynamoDB API: ${GREEN}http://localhost:8080/dynamodb/${NC}"
+    echo -e "  - DynamoDB API: ${GREEN}http://localhost:8080/dynamodb/${NC} (Port: 8002)"
 else
     echo -e "${RED}Failed to start AWS services. Check docker logs for details.${NC}"
     exit 1

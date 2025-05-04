@@ -10,7 +10,7 @@ This directory contains Docker configurations to simulate AWS services locally f
    - Accessible via Nginx at: http://localhost:8080/s3/ and http://localhost:8080/minio-console/
 
 2. **DynamoDB Local** - DynamoDB-compatible NoSQL database
-   - Port: 8000
+   - Port: 8002
    - Accessible via Nginx at: http://localhost:8080/dynamodb/
 
 3. **Nginx** - Simulates API Gateway for routing and rate limiting
