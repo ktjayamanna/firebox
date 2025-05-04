@@ -1,0 +1,99 @@
+version: '3'
+
+services:
+  # MinIO service (S3 alternative)
+  minio:
+    image: minio/minio
+    container_name: aws-s3
+    ports:
+      - "9000:9000"  # API
+      - "9001:9001"  # Console
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    volumes:
+      - minio-data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    restart: unless-stopped
+
+  # Create buckets and set policies
+  minio-setup:
+    image: minio/mc
+    container_name: minio-setup
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      sleep 10 &&
+      /usr/bin/mc config host add myminio http://minio:9000 minioadmin minioadmin &&
+      /usr/bin/mc mb myminio/dropbox-chunks --region=us-east-1 &&
+      /usr/bin/mc policy set public myminio/dropbox-chunks &&
+      exit 0
+      "
+
+  # DynamoDB Local
+  dynamodb-local:
+    image: amazon/dynamodb-local
+    container_name: aws-dynamodb
+    ports:
+      - "8000:8000"
+    command: "-jar DynamoDBLocal.jar -sharedDb -dbPath /home/dynamodblocal/data"
+    volumes:
+      - dynamodb-data:/home/dynamodblocal/data
+    restart: unless-stopped
+
+  # DynamoDB setup (create tables)
+  dynamodb-setup:
+    image: amazon/aws-cli
+    container_name: dynamodb-setup
+    depends_on:
+      - dynamodb-local
+    environment:
+      - AWS_ACCESS_KEY_ID=dummy
+      - AWS_SECRET_ACCESS_KEY=dummy
+      - AWS_DEFAULT_REGION=us-east-1
+    entrypoint: >
+      /bin/sh -c "
+      sleep 5 &&
+      aws dynamodb create-table --table-name FilesMetaData \
+        --attribute-definitions AttributeName=file_id,AttributeType=S \
+        --key-schema AttributeName=file_id,KeyType=HASH \
+        --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5 \
+        --endpoint-url http://dynamodb-local:8000 &&
+      aws dynamodb create-table --table-name Chunks \
+        --attribute-definitions AttributeName=chunk_id,AttributeType=S AttributeName=file_id,AttributeType=S \
+        --key-schema AttributeName=chunk_id,KeyType=HASH AttributeName=file_id,KeyType=RANGE \
+        --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5 \
+        --endpoint-url http://dynamodb-local:8000 &&
+      aws dynamodb create-table --table-name Folders \
+        --attribute-definitions AttributeName=folder_id,AttributeType=S \
+        --key-schema AttributeName=folder_id,KeyType=HASH \
+        --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5 \
+        --endpoint-url http://dynamodb-local:8000 &&
+      exit 0
+      "
+
+  # Nginx (API Gateway / Load Balancer)
+  nginx:
+    image: nginx:alpine
+    container_name: aws-api-gateway
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+    depends_on:
+      - minio
+      - dynamodb-local
+    restart: unless-stopped
+
+volumes:
+  minio-data:
+    driver: local
+  dynamodb-data:
+    driver: local
