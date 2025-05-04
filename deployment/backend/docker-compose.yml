@@ -1,0 +1,55 @@
+version: '3'
+
+services:
+  files-service:
+    build:
+      context: ../../
+      dockerfile: deployment/backend/Dockerfile
+    container_name: files-service
+    ports:
+      - "8001:8001"
+    environment:
+      - AWS_ACCESS_KEY_ID=minioadmin
+      - AWS_SECRET_ACCESS_KEY=minioadmin
+      - AWS_REGION=us-east-1
+      - S3_ENDPOINT=http://minio:9000
+      - S3_BUCKET_NAME=dropbox-chunks
+      - S3_USE_SSL=False
+      - DYNAMODB_HOST=http://dynamodb-local:8000
+      - DYNAMODB_REGION=us-east-1
+      - API_HOST=0.0.0.0
+      - API_PORT=8001
+      - CHUNK_SIZE=5242880
+      - PRESIGNED_URL_EXPIRATION=3600
+    networks:
+      - dropbox-network
+    depends_on:
+      - aws-services
+    restart: unless-stopped
+
+  # This service is a dependency that ensures AWS services are running
+  aws-services:
+    image: alpine:latest
+    container_name: aws-services-check
+    command: >
+      /bin/sh -c "
+      echo 'Checking if AWS services are available...' &&
+      apk add --no-cache curl &&
+      until curl -s http://minio:9000/minio/health/live; do
+        echo 'Waiting for MinIO to be available...';
+        sleep 5;
+      done &&
+      until curl -s http://dynamodb-local:8000; do
+        echo 'Waiting for DynamoDB to be available...';
+        sleep 5;
+      done &&
+      echo 'AWS services are available!' &&
+      sleep infinity
+      "
+    networks:
+      - dropbox-network
+    restart: unless-stopped
+
+networks:
+  dropbox-network:
+    external: true

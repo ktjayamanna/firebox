@@ -16,6 +16,8 @@ This repository contains the source code and design documents for a Dropbox-like
 ## Components
 
 - **Client**: Handles local file synchronization and provides a REST API
+- **Backend Services**: Microservices for handling various aspects of the system
+  - **Files Service**: Handles file metadata and multipart uploads
 - **Database**: SQLite database for storing file metadata and chunk information
 - **Chunking System**: Splits files into chunks for efficient storage and transfer
 - **AWS Services**: Simulated AWS services for development and testing
@@ -72,6 +74,28 @@ For more information about the test suite, see [client/tests/README.md](client/t
    ```
 
 For more information about the AWS services, see [deployment/aws/README.md](deployment/aws/README.md).
+
+### Backend Services
+
+1. Start the AWS services first (required for backend services):
+   ```bash
+   ./deployment/aws/deployment_scripts/start_aws_services.sh
+   ```
+
+2. Start the backend services:
+   ```bash
+   ./deployment/backend/deployment_scripts/start_backend_services.sh
+   ```
+
+3. Access the services:
+   - Files Service API: http://localhost:8001/
+
+4. Stop the services:
+   ```bash
+   ./deployment/backend/deployment_scripts/stop_backend_services.sh
+   ```
+
+For more information about the backend services, see [deployment/backend/README.md](deployment/backend/README.md).
 
 ## Acknowledgements
 
