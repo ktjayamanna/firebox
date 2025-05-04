@@ -19,7 +19,18 @@ services:
       - chunk-data:/app/tmp/chunk
     environment:
       - PYTHONPATH=/app
+      - APP_DIR=/app
+      - SYNC_DIR=/app/my_dropbox
+      - CHUNK_DIR=/app/tmp/chunk
       - DATABASE_URL=sqlite:///./data/dropbox.db
+      - DB_FILE_PATH=/app/data/dropbox.db
+      - DB_POOL_SIZE=20
+      - DB_MAX_OVERFLOW=10
+      - DB_POOL_TIMEOUT=30
+      - DB_POOL_RECYCLE=3600
+      - CHUNK_SIZE=5242880
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
     restart: unless-stopped
 
 volumes:

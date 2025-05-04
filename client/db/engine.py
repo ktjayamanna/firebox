@@ -1,19 +1,16 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-import os
-
-# Get database URL from environment variable or use default
-SQLALCHEMY_DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite:///./data/dropbox.db")
+from config import DATABASE_URL, DB_POOL_SIZE, DB_MAX_OVERFLOW, DB_POOL_TIMEOUT, DB_POOL_RECYCLE
 
 # Create SQLAlchemy engine
 engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, 
+    DATABASE_URL,
     connect_args={"check_same_thread": False},
-    pool_size=20,               # Default number of connections to maintain
-    max_overflow=10,            # Allow up to 10 connections beyond pool_size
-    pool_timeout=30,            # Seconds to wait before timing out on pool checkout
-    pool_recycle=3600           # Recycle connections after 1 hour
+    pool_size=DB_POOL_SIZE,               # Default number of connections to maintain
+    max_overflow=DB_MAX_OVERFLOW,         # Allow up to 10 connections beyond pool_size
+    pool_timeout=DB_POOL_TIMEOUT,         # Seconds to wait before timing out on pool checkout
+    pool_recycle=DB_POOL_RECYCLE          # Recycle connections after 1 hour
 )
 
 # Create SessionLocal class

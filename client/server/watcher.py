@@ -1,6 +1,5 @@
 import pyinotify
 import os
-import uuid
 from db.engine import SessionLocal
 from db.models import FilesMetaData, Chunks, Folders
 from server.sync import SyncEngine

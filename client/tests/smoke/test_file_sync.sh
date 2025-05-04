@@ -27,8 +27,8 @@ NC='\033[0m' # No Color
 # Define constants
 CONTAINER_NAME="dropbox-client"
 MOCK_DATA_DIR="client/tests/mock_data"
-CONTAINER_SYNC_DIR="/app/my_dropbox"
-DB_PATH="/app/data/dropbox.db"
+CONTAINER_SYNC_DIR="${SYNC_DIR:-/app/my_dropbox}"
+DB_PATH="${DB_FILE_PATH:-/app/data/dropbox.db}"
 WAIT_TIME=5  # seconds to wait for file processing
 
 #===================================================================================

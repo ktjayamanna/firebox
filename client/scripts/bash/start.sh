@@ -1,9 +1,9 @@
 #!/bin/bash
 set -e
 
-# Use absolute paths to ensure everything is created in the right place
-APP_DIR="/app"
-DB_FILE="${APP_DIR}/data/dropbox.db"
+# Use environment variables or defaults
+APP_DIR="${APP_DIR:-/app}"
+DB_FILE="${DB_FILE_PATH:-${APP_DIR}/data/dropbox.db}"
 ALEMBIC_INI="${APP_DIR}/alembic.ini"
 ALEMBIC_DIR="${APP_DIR}/alembic"
 ALEMBIC_ENV="${ALEMBIC_DIR}/env.py"

@@ -19,6 +19,9 @@ if ! docker ps | grep -q dropbox-client; then
     exit 1
 fi
 
+# Get environment variables or use defaults
+DB_PATH="${DB_FILE_PATH:-/app/data/dropbox.db}"
+
 # SQL directory path
 SQL_DIR="client/scripts/sql"
 
@@ -46,7 +49,7 @@ execute_sql_file() {
     # Try to execute the SQL file with retries
     while [ $retry_count -lt $max_retries ] && [ "$success" = false ]; do
         # Execute SQL file against the database
-        output=$(docker exec dropbox-client sqlite3 /app/data/dropbox.db ".read /tmp/$filename" 2>&1)
+        output=$(docker exec dropbox-client sqlite3 "$DB_PATH" ".read /tmp/$filename" 2>&1)
         exit_code=$?
 
         if [ $exit_code -eq 0 ]; then

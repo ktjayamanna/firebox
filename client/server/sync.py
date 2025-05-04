@@ -1,15 +1,14 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import func
 from db.models import FilesMetaData, Chunks, Folders
 from datetime import datetime, timezone
 import os
 import uuid
 import hashlib
-from config import CHUNK_DIR, SYNC_DIR
-from typing import Optional, List, Dict, Set, Tuple
+from config import CHUNK_DIR, SYNC_DIR, CHUNK_SIZE
+from typing import Optional
 
 class SyncEngine:
-    def __init__(self, db: Session, sync_dir: str = "/app/my_dropbox"):
+    def __init__(self, db: Session, sync_dir: str = SYNC_DIR):
         self.db = db
         self.sync_dir = sync_dir
 
@@ -406,7 +405,7 @@ class SyncEngine:
         print(f"Scan complete. Found {file_count} files and {dir_count} directories.")
         print(f"Processed {processed_count} files, skipped {skipped_count} unchanged files.")
 
-    def _process_file_chunks(self, file_path: str, file_id: str, chunk_size: int = 5 * 1024 * 1024):
+    def _process_file_chunks(self, file_path: str, file_id: str, chunk_size: int = CHUNK_SIZE):
         """
         Process a file into chunks
 
