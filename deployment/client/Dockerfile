@@ -4,7 +4,20 @@ FROM python:3.9-slim
 RUN apt-get update && apt-get install -y \
     inotify-tools \
     sqlite3 \
+    curl \
+    unzip \
+    nano \
+    iputils-ping \
+    net-tools \
+    dnsutils \
+    netcat \
     && rm -rf /var/lib/apt/lists/*
+
+# Install AWS CLI
+RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
+    unzip awscliv2.zip && \
+    ./aws/install && \
+    rm -rf aws awscliv2.zip
 
 # Set working directory
 WORKDIR /app

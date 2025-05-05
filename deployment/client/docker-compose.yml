@@ -31,6 +31,8 @@ services:
       - CHUNK_SIZE=5242880
       - API_HOST=0.0.0.0
       - API_PORT=8000
+    networks:
+      - dropbox-network
     restart: unless-stopped
 
 volumes:
@@ -40,3 +42,7 @@ volumes:
     driver: local
   chunk-data:
     driver: local
+
+networks:
+  dropbox-network:
+    external: true
