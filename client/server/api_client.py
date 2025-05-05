@@ -113,9 +113,18 @@ class FileServiceClient:
             # Extract the ETag from the response headers
             etag = response.headers.get('ETag')
             if etag:
-                # Keep the quotes for the ETag as MinIO expects them in the CompleteMultipartUpload call
+                # Log the raw ETag for debugging
+                print(f"DEBUG: Raw ETag from S3/MinIO: '{etag}'")
+                logger.info(f"DEBUG: Raw ETag from S3/MinIO: '{etag}'")
+                
+                # S3/MinIO typically returns ETags with quotes, which we should preserve
                 # Just remove any extra whitespace
                 etag = etag.strip()
+                
+                # Log the processed ETag
+                print(f"DEBUG: Processed ETag: '{etag}'")
+                logger.info(f"DEBUG: Processed ETag: '{etag}'")
+                
                 logger.info(f"Chunk uploaded successfully with ETag: {etag}")
                 return True, etag
             else:
@@ -141,20 +150,42 @@ class FileServiceClient:
 
         # Print detailed information about the chunk data
         print(f"Confirming upload for file {file_id} with {len(chunk_ids)} chunks")
+        
+        # Create a copy of chunk_data to avoid modifying the original
+        processed_chunk_data = []
+        
         for i, chunk in enumerate(chunk_data):
+            # Create a copy of the chunk data
+            processed_chunk = chunk.copy()
+            
             # Ensure each chunk has a fingerprint (SHA-256 hash)
-            if 'fingerprint' not in chunk:
+            if 'fingerprint' not in processed_chunk:
                 # This should not happen if the client is properly calculating fingerprints
                 # But as a fallback, we'll use a placeholder
-                logger.warning(f"Chunk {chunk['chunk_id']} missing fingerprint, using placeholder")
-                chunk['fingerprint'] = "placeholder-fingerprint-" + chunk['chunk_id']
+                logger.warning(f"Chunk {processed_chunk['chunk_id']} missing fingerprint, using placeholder")
+                processed_chunk['fingerprint'] = "placeholder-fingerprint-" + processed_chunk['chunk_id']
 
-            print(f"  Chunk {i+1}: chunk_id={chunk['chunk_id']}, part_number={chunk['part_number']}, etag={chunk['etag']}, fingerprint={chunk['fingerprint']}")
+            # Handle ETag quotes - S3 returns ETags with quotes, and we need to preserve them
+            # for the CompleteMultipartUpload call
+            if 'etag' in processed_chunk:
+                # Log the raw ETag
+                print(f"DEBUG: Raw ETag for chunk {processed_chunk['chunk_id']}: '{processed_chunk['etag']}'")
+                
+                # Ensure the ETag has quotes (S3 expects them)
+                etag_value = processed_chunk['etag']
+                if not (etag_value.startswith('"') and etag_value.endswith('"')):
+                    etag_value = etag_value.strip('"')
+                    etag_value = f'"{etag_value}"'
+                    processed_chunk['etag'] = etag_value
+                    print(f"DEBUG: Added quotes to ETag: '{etag_value}'")
+                
+            print(f"  Chunk {i+1}: chunk_id={processed_chunk['chunk_id']}, part_number={processed_chunk['part_number']}, etag={processed_chunk['etag']}, fingerprint={processed_chunk['fingerprint']}")
+            processed_chunk_data.append(processed_chunk)
 
         data = {
             "file_id": file_id,
             "chunk_ids": chunk_ids,
-            "chunk_etags": chunk_data  # Include the full chunk data with ETags and fingerprints
+            "chunk_etags": processed_chunk_data  # Include the processed chunk data with ETags and fingerprints
         }
 
         logger.info(f"Confirming upload for file {file_id} with {len(chunk_ids)} chunks")

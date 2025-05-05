@@ -95,6 +95,15 @@ def complete_multipart_upload(file_id: str, upload_id: str, parts: List[Dict]) -
     """
     s3_client = get_s3_client()
 
+    # Log the parts for debugging
+    print(f"DEBUG: Parts for completing multipart upload: {parts}")
+    
+    # Check if ETags have quotes
+    for i, part in enumerate(parts):
+        etag = part.get('ETag', '')
+        has_quotes = etag.startswith('"') and etag.endswith('"')
+        print(f"DEBUG: Part {i+1} ETag: '{etag}', has quotes: {has_quotes}")
+    
     response = s3_client.complete_multipart_upload(
         Bucket=config.S3_BUCKET_NAME,
         Key=file_id,
