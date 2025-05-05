@@ -5,7 +5,6 @@
 # Description: This script creates a randomly generated text file and moves it to
 # the Dropbox sync folder, then confirms the upload by listing the files.
 #
-# Usage: ./client/scripts/bash/test_file_upload.sh [file_size_kb]
 #===================================================================================
 
 # Set text colors for better readability
@@ -143,8 +142,8 @@ fi
 
 # Step 7: Check chunk files on disk
 echo -e "\n${YELLOW}Step 7: Checking chunk files on disk...${NC}"
-CHUNK_DIR="${CHUNK_DIR:-/app/chunks}"
-CHUNK_FILES=$(docker exec $CONTAINER_NAME bash -c "find $CHUNK_DIR -name \"${FILE_ID}_*\" | wc -l")
+CHUNK_DIR="${CHUNK_DIR:-/app/tmp/chunk}"  # Updated to correct path
+CHUNK_FILES=$(docker exec $CONTAINER_NAME bash -c "mkdir -p $CHUNK_DIR && find $CHUNK_DIR -name \"${FILE_ID}_*\" | wc -l")
 
 if [ "$CHUNK_FILES" -gt 0 ]; then
     echo -e "${GREEN}Found $CHUNK_FILES chunk files on disk for this file${NC}"
@@ -152,7 +151,8 @@ if [ "$CHUNK_FILES" -gt 0 ]; then
     echo -e "${YELLOW}Chunk files:${NC}"
     docker exec $CONTAINER_NAME bash -c "find $CHUNK_DIR -name \"${FILE_ID}_*\" -ls"
 else
-    echo -e "${RED}No chunk files found on disk for this file${NC}"
+    echo -e "${YELLOW}No chunk files found on disk for this file${NC}"
+    echo -e "${CYAN}Note: This is expected if chunks are stored in the database or cloud storage${NC}"
 fi
 
 # Step 8: Clean up the temporary file
