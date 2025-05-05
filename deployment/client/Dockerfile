@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y \
     iputils-ping \
     net-tools \
     dnsutils \
-    netcat \
+    procps \
     && rm -rf /var/lib/apt/lists/*
 
 # Install AWS CLI
