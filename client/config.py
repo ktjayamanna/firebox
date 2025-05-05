@@ -25,3 +25,8 @@ CHUNK_SIZE = int(os.environ.get("CHUNK_SIZE", 5 * 1024 * 1024))
 # API settings
 API_HOST = os.environ.get("API_HOST", "0.0.0.0")
 API_PORT = int(os.environ.get("API_PORT", 8000))
+
+# Files Service API settings
+FILES_SERVICE_URL = os.environ.get("FILES_SERVICE_URL", "http://files-service:8001")
+REQUEST_TIMEOUT = int(os.environ.get("REQUEST_TIMEOUT", 30))
+MAX_RETRIES = int(os.environ.get("MAX_RETRIES", 3))

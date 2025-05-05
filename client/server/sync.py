@@ -407,46 +407,175 @@ class SyncEngine:
 
     def _process_file_chunks(self, file_path: str, file_id: str, chunk_size: int = CHUNK_SIZE):
         """
-        Process a file into chunks
+        Process a file into chunks and upload to the file service
+
+        1. Split the file into chunks
+        2. Send file metadata to the file service
+        3. Upload chunks using presigned URLs
+        4. Confirm successful uploads
 
         Args:
             file_path: Path to the file to process
             file_id: ID of the file
             chunk_size: Size of each chunk in bytes (default: 5MB)
         """
+        from server.api_client import FileServiceClient
+
+        # Get file metadata
+        file_name = os.path.basename(file_path)
+        _, file_extension = os.path.splitext(file_path)
+        file_type = file_extension[1:] if file_extension else "unknown"
+
+        # Get folder ID
+        file_metadata = self.db.query(FilesMetaData).filter(FilesMetaData.file_id == file_id).first()
+        if not file_metadata:
+            print(f"Error: File metadata not found for file ID {file_id}")
+            return
+
+        folder_id = file_metadata.folder_id
+        file_hash = file_metadata.file_hash
+
+        # First pass: count chunks and collect fingerprints
+        chunk_count = 0
+        fingerprints = []
+
         with open(file_path, 'rb') as f:
-            chunk_index = 0
             while True:
                 chunk_data = f.read(chunk_size)
                 if not chunk_data:
                     break
 
-                # Generate chunk ID
-                chunk_id = f"{file_id}_{chunk_index}"
-
                 # Calculate fingerprint (hash) of chunk
                 fingerprint = hashlib.sha256(chunk_data).hexdigest()
+                fingerprints.append(fingerprint)
+                chunk_count += 1
 
-                # Save chunk to the dedicated chunk directory (not in sync dir)
-                chunk_path = os.path.join(CHUNK_DIR, f"{chunk_id}.chunk")
-                print(f"Saving chunk to: {chunk_path}")
-                try:
-                    with open(chunk_path, 'wb') as chunk_file:
-                        chunk_file.write(chunk_data)
-                    print(f"Successfully saved chunk to {chunk_path}")
-                except Exception as e:
-                    print(f"Error saving chunk to {chunk_path}: {e}")
+        print(f"File {file_path} will be split into {chunk_count} chunks")
 
-                # Create chunk metadata
-                chunk = Chunks(
-                    chunk_id=chunk_id,
-                    file_id=file_id,
-                    created_at=datetime.now(timezone.utc),
-                    last_synced=datetime.now(timezone.utc),
-                    fingerprint=fingerprint
-                )
+        # Initialize API client
+        api_client = FileServiceClient()
 
-                self.db.add(chunk)
-                chunk_index += 1
+        try:
+            # Step 1: Send file metadata to file service and get presigned URLs
+            print(f"Sending file metadata to file service for {file_path}")
+            response = api_client.create_file(
+                file_name=file_name,
+                file_path=file_path,
+                file_type=file_type,
+                folder_id=folder_id,
+                chunk_count=chunk_count,
+                file_hash=file_hash
+            )
 
+            remote_file_id = response.get('file_id')
+            presigned_urls = response.get('presigned_urls', [])
+
+            if not remote_file_id or not presigned_urls:
+                print(f"Error: Invalid response from file service: {response}")
+                return
+
+            print(f"Received file ID {remote_file_id} and {len(presigned_urls)} presigned URLs")
+
+            # Step 2: Upload chunks using presigned URLs
+            successful_chunk_ids = []
+
+            with open(file_path, 'rb') as f:
+                for i in range(chunk_count):
+                    chunk_data = f.read(chunk_size)
+                    if not chunk_data:
+                        break
+
+                    # Generate chunk ID
+                    chunk_id = f"{file_id}_{i}"
+                    local_chunk_id = chunk_id  # For local storage
+                    remote_chunk_id = presigned_urls[i]['chunk_id']  # From API response
+
+                    # Calculate fingerprint (hash) of chunk
+                    fingerprint = hashlib.sha256(chunk_data).hexdigest()
+
+                    # Save chunk to the dedicated chunk directory (not in sync dir)
+                    chunk_path = os.path.join(CHUNK_DIR, f"{local_chunk_id}.chunk")
+                    print(f"Saving chunk to: {chunk_path}")
+                    try:
+                        with open(chunk_path, 'wb') as chunk_file:
+                            chunk_file.write(chunk_data)
+                        print(f"Successfully saved chunk to {chunk_path}")
+                    except Exception as e:
+                        print(f"Error saving chunk to {chunk_path}: {e}")
+                        continue
+
+                    # Create local chunk metadata
+                    chunk = Chunks(
+                        chunk_id=local_chunk_id,
+                        file_id=file_id,
+                        created_at=datetime.now(timezone.utc),
+                        last_synced=None,  # Will be updated after successful upload
+                        fingerprint=fingerprint
+                    )
+                    self.db.add(chunk)
+
+                    # Upload chunk to S3 using presigned URL
+                    presigned_url = presigned_urls[i]['presigned_url']
+                    print(f"Uploading chunk {i+1}/{chunk_count} to S3...")
+
+                    upload_success, etag = api_client.upload_chunk(presigned_url, chunk_data)
+                    if upload_success:
+                        print(f"Successfully uploaded chunk {i+1}/{chunk_count}" + (f" with ETag: {etag}" if etag else ""))
+
+                        # Store chunk info with ETag and fingerprint
+                        # Important: We must use the exact ETag returned by S3/MinIO
+                        # This is critical for the multipart upload completion
+                        chunk_info = {
+                            'chunk_id': remote_chunk_id,
+                            'part_number': i + 1,  # Part numbers start at 1
+                            'etag': etag,  # Use the exact ETag from S3/MinIO
+                            'fingerprint': fingerprint  # Include the SHA-256 fingerprint
+                        }
+
+                        # Only add to successful chunks if we got an ETag
+                        if etag:
+                            successful_chunk_ids.append(chunk_info)
+                            # Update last_synced timestamp
+                            chunk.last_synced = datetime.now(timezone.utc)
+                        else:
+                            print(f"Warning: No ETag received for chunk {i+1}/{chunk_count}, cannot complete multipart upload")
+                    else:
+                        print(f"Failed to upload chunk {i+1}/{chunk_count}")
+
+            # Step 3: Confirm successful uploads
+            if successful_chunk_ids:
+                print(f"Confirming {len(successful_chunk_ids)} successful uploads")
+                print(f"Chunk ETags: {successful_chunk_ids}")
+                confirm_response = api_client.confirm_upload(remote_file_id, successful_chunk_ids)
+                print(f"Confirmation response: {confirm_response}")
+
+                # If the confirmation failed, try again with a more direct approach
+                if not confirm_response.get('success', False):
+                    print(f"Confirmation failed. Trying again with a more direct approach...")
+
+                    # Create a simpler chunk_etags structure
+                    simple_chunk_etags = []
+                    for chunk_info in successful_chunk_ids:
+                        simple_chunk_etags.append({
+                            'chunk_id': chunk_info['chunk_id'],
+                            'part_number': chunk_info['part_number'],
+                            'etag': chunk_info['etag'],
+                            'fingerprint': chunk_info.get('fingerprint', '')  # Include fingerprint if available
+                        })
+
+                    # Try again with the simpler structure
+                    retry_response = api_client.confirm_upload(remote_file_id, simple_chunk_etags)
+                    print(f"Retry confirmation response: {retry_response}")
+
+                if confirm_response.get('success'):
+                    print(f"Successfully confirmed {confirm_response.get('confirmed_chunks')} chunks")
+                else:
+                    print(f"Failed to confirm uploads: {confirm_response}")
+            else:
+                print("No chunks were successfully uploaded")
+
+        except Exception as e:
+            print(f"Error during file upload process: {e}")
+
+        # Commit changes to local database
         self.db.commit()

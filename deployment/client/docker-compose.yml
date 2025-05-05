@@ -31,6 +31,10 @@ services:
       - CHUNK_SIZE=5242880
       - API_HOST=0.0.0.0
       - API_PORT=8000
+      # Files Service API settings
+      - FILES_SERVICE_URL=http://files-service:8001
+      - REQUEST_TIMEOUT=30
+      - MAX_RETRIES=3
     networks:
       - dropbox-network
     restart: unless-stopped
