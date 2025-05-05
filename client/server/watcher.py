@@ -1,5 +1,6 @@
 import pyinotify
 import os
+import uuid
 from db.engine import SessionLocal
 from db.models import FilesMetaData, Chunks, Folders
 from server.sync import SyncEngine
@@ -256,7 +257,153 @@ class Watcher:
                     # Clean up orphaned chunks
                     sync_engine.cleanup_orphaned_chunks()
 
-            # Note: Move events would need additional handling
+            elif event_type == 'move_to_dir':
+                # Handle directory moved to the sync directory
+                print(f"Handling directory moved to sync directory: {path}")
+
+                # Special handling for top-level directories moved directly to the sync directory
+                if os.path.dirname(path) == sync_engine.sync_dir:
+                    print(f"Top-level directory moved to sync directory, setting parent to root folder")
+                    # Get the root folder
+                    root_folder = sync_engine._get_or_create_root_folder()
+
+                    # Create the folder with the root folder as parent
+                    folder_name = os.path.basename(path)
+                    folder_id = str(uuid.uuid4())
+
+                    # Create folder in local database
+                    folder = Folders(
+                        folder_id=folder_id,
+                        folder_path=path,
+                        folder_name=folder_name,
+                        parent_folder_id=None  # Set parent to null for top-level folders
+                    )
+
+                    db.add(folder)
+                    db.commit()
+                    print(f"Added top-level moved directory to database: {path} with ID: {folder_id}")
+
+                    # Sync folder with server
+                    try:
+                        from server.api_client import FileServiceClient
+                        api_client = FileServiceClient()
+
+                        # Send folder information to server
+                        response = api_client.create_folder(
+                            folder_id=folder_id,
+                            folder_path=path,
+                            folder_name=folder_name,
+                            parent_folder_id=root_folder.folder_id
+                        )
+
+                        if response.get('success'):
+                            print(f"Successfully synced folder {path} with server")
+                        else:
+                            print(f"Failed to sync folder {path} with server: {response}")
+                    except Exception as e:
+                        print(f"Error syncing folder {path} with server: {e}")
+                else:
+                    # For subdirectories, use the normal folder tree creation
+                    folder_id = sync_engine._ensure_folder_tree(path)
+                    print(f"Added moved directory to database: {path} with ID: {folder_id}")
+
+                # Scan the directory for any existing files
+                print(f"Scanning moved directory: {path}")
+                for root, dirs, files in os.walk(path):
+                    # First, ensure all subdirectories are in the database
+                    for dir_name in dirs:
+                        dir_path = os.path.join(root, dir_name)
+                        subdir_folder_id = sync_engine._ensure_folder_tree(dir_path)
+                        print(f"Added subdirectory to database: {dir_path} with ID: {subdir_folder_id}")
+
+                    # Then process all files in this directory
+                    for filename in files:
+                        file_path = os.path.join(root, filename)
+
+                        # Skip hidden files
+                        if filename.startswith('.'):
+                            continue
+
+                        try:
+                            # Get the folder ID for this file's directory
+                            file_dir = os.path.dirname(file_path)
+                            folder = db.query(Folders).filter(Folders.folder_path == file_dir).first()
+
+                            if folder:
+                                # Calculate file hash for content tracking
+                                file_hash = sync_engine.calculate_file_hash(file_path)
+
+                                # Get file type from extension
+                                _, file_extension = os.path.splitext(filename)
+                                file_type = file_extension[1:] if file_extension else "unknown"
+
+                                # Create file metadata with the correct folder ID
+                                file_id = str(uuid.uuid4())
+                                file_metadata = FilesMetaData(
+                                    file_id=file_id,
+                                    file_type=file_type,
+                                    file_path=file_path,
+                                    folder_id=folder.folder_id,  # Use the correct folder ID
+                                    file_name=filename,
+                                    file_hash=file_hash
+                                )
+
+                                # Add to database
+                                db.add(file_metadata)
+                                db.commit()
+                                print(f"Added file to database with correct folder: {file_path} with ID: {file_id}")
+
+                                # Process file chunks
+                                sync_engine._process_file_chunks(file_path, file_id)
+                            else:
+                                # Fallback to normal upload if folder not found
+                                file_id = sync_engine.upload_file(file_path)
+                                print(f"Processed file in moved directory: {file_path} with ID: {file_id}")
+                        except Exception as e:
+                            print(f"Error processing file {file_path}: {e}")
+
+            elif event_type == 'move_to':
+                # Handle file moved to the sync directory
+                print(f"Handling file moved to sync directory: {path}")
+
+                # Get the folder ID for this file's directory
+                file_dir = os.path.dirname(path)
+                folder = db.query(Folders).filter(Folders.folder_path == file_dir).first()
+
+                if folder:
+                    print(f"Found folder for file: {folder.folder_name} (ID: {folder.folder_id})")
+                    # Calculate file hash for content tracking
+                    file_hash = sync_engine.calculate_file_hash(path)
+
+                    # Extract file name
+                    file_name = os.path.basename(path)
+
+                    # Get file type from extension
+                    _, file_extension = os.path.splitext(path)
+                    file_type = file_extension[1:] if file_extension else "unknown"
+
+                    # Create file metadata with the correct folder ID
+                    file_id = str(uuid.uuid4())
+                    file_metadata = FilesMetaData(
+                        file_id=file_id,
+                        file_type=file_type,
+                        file_path=path,
+                        folder_id=folder.folder_id,  # Use the correct folder ID
+                        file_name=file_name,
+                        file_hash=file_hash
+                    )
+
+                    # Add to database
+                    db.add(file_metadata)
+                    db.commit()
+                    print(f"Added file to database with correct folder: {path} with ID: {file_id}")
+
+                    # Process file chunks
+                    sync_engine._process_file_chunks(path, file_id)
+                else:
+                    # For files without a matching folder, use the normal upload process
+                    file_id = sync_engine.upload_file(path)
+                    print(f"Uploaded moved file: {path} with ID: {file_id}")
 
         finally:
             db.close()

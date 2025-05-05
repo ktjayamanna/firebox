@@ -116,15 +116,15 @@ class FileServiceClient:
                 # Log the raw ETag for debugging
                 print(f"DEBUG: Raw ETag from S3/MinIO: '{etag}'")
                 logger.info(f"DEBUG: Raw ETag from S3/MinIO: '{etag}'")
-                
+
                 # S3/MinIO typically returns ETags with quotes, which we should preserve
                 # Just remove any extra whitespace
                 etag = etag.strip()
-                
+
                 # Log the processed ETag
                 print(f"DEBUG: Processed ETag: '{etag}'")
                 logger.info(f"DEBUG: Processed ETag: '{etag}'")
-                
+
                 logger.info(f"Chunk uploaded successfully with ETag: {etag}")
                 return True, etag
             else:
@@ -133,6 +133,29 @@ class FileServiceClient:
         except requests.exceptions.RequestException as e:
             logger.error(f"Failed to upload chunk: {e}")
             return False, None
+
+    def create_folder(self, folder_id: str, folder_path: str, folder_name: str, parent_folder_id: Optional[str] = None) -> Dict:
+        """
+        Create or update a folder in the Files Service
+
+        Args:
+            folder_id: ID of the folder
+            folder_path: Path of the folder
+            folder_name: Name of the folder
+            parent_folder_id: ID of the parent folder (None for root)
+
+        Returns:
+            Dict: Response data
+        """
+        data = {
+            "folder_id": folder_id,
+            "folder_path": folder_path,
+            "folder_name": folder_name,
+            "parent_folder_id": parent_folder_id
+        }
+
+        logger.info(f"Creating/updating folder {folder_name} with ID {folder_id}")
+        return self._make_request("POST", "/folders", data)
 
     def confirm_upload(self, file_id: str, chunk_data: List[Dict[str, str]]) -> Dict:
         """
@@ -150,14 +173,14 @@ class FileServiceClient:
 
         # Print detailed information about the chunk data
         print(f"Confirming upload for file {file_id} with {len(chunk_ids)} chunks")
-        
+
         # Create a copy of chunk_data to avoid modifying the original
         processed_chunk_data = []
-        
+
         for i, chunk in enumerate(chunk_data):
             # Create a copy of the chunk data
             processed_chunk = chunk.copy()
-            
+
             # Ensure each chunk has a fingerprint (SHA-256 hash)
             if 'fingerprint' not in processed_chunk:
                 # This should not happen if the client is properly calculating fingerprints
@@ -170,7 +193,7 @@ class FileServiceClient:
             if 'etag' in processed_chunk:
                 # Log the raw ETag
                 print(f"DEBUG: Raw ETag for chunk {processed_chunk['chunk_id']}: '{processed_chunk['etag']}'")
-                
+
                 # Ensure the ETag has quotes (S3 expects them)
                 etag_value = processed_chunk['etag']
                 if not (etag_value.startswith('"') and etag_value.endswith('"')):
@@ -178,7 +201,7 @@ class FileServiceClient:
                     etag_value = f'"{etag_value}"'
                     processed_chunk['etag'] = etag_value
                     print(f"DEBUG: Added quotes to ETag: '{etag_value}'")
-                
+
             print(f"  Chunk {i+1}: chunk_id={processed_chunk['chunk_id']}, part_number={processed_chunk['part_number']}, etag={processed_chunk['etag']}, fingerprint={processed_chunk['fingerprint']}")
             processed_chunk_data.append(processed_chunk)
 

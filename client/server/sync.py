@@ -191,6 +191,12 @@ class SyncEngine:
             root_folder = self._get_or_create_root_folder()
             return root_folder.folder_id
 
+        # Check if the directory itself exists in the database
+        existing_dir = self.find_existing_folder(directory_path)
+        if existing_dir:
+            # If the directory exists, return its ID
+            return existing_dir.folder_id
+
         # For file paths, we need to ensure the parent directory exists
         parent_dir = os.path.dirname(directory_path)
 
@@ -200,7 +206,7 @@ class SyncEngine:
             return root_folder.folder_id
 
         # Ensure all parent directories exist in the database
-        return self._ensure_folder_tree(parent_dir)
+        return self._ensure_folder_tree(directory_path)
 
     def _get_or_create_root_folder(self) -> Folders:
         """
@@ -232,7 +238,27 @@ class SyncEngine:
 
             self.db.add(root_folder)
             self.db.commit()
-            print(f"Added root folder to database: {self.sync_dir}")
+            print(f"Added root folder to local database: {self.sync_dir}")
+
+            # Sync root folder with server
+            try:
+                from server.api_client import FileServiceClient
+                api_client = FileServiceClient()
+
+                # Send root folder information to server
+                response = api_client.create_folder(
+                    folder_id=root_id,
+                    folder_path=self.sync_dir,
+                    folder_name=root_name,
+                    parent_folder_id=None
+                )
+
+                if response.get('success'):
+                    print(f"Successfully synced root folder with server")
+                else:
+                    print(f"Failed to sync root folder with server: {response}")
+            except Exception as e:
+                print(f"Error syncing root folder with server: {e}")
 
         return root_folder
 
@@ -268,7 +294,7 @@ class SyncEngine:
 
     def _create_folder_in_db(self, folder_path: str, parent_folder_id: str) -> str:
         """
-        Create a folder in the database
+        Create a folder in the database and sync with server
 
         Args:
             folder_path: Path to the folder
@@ -286,6 +312,7 @@ class SyncEngine:
             os.makedirs(folder_path, exist_ok=True)
             print(f"Created physical directory: {folder_path}")
 
+        # Create folder in local database
         folder = Folders(
             folder_id=folder_id,
             folder_path=folder_path,
@@ -295,7 +322,27 @@ class SyncEngine:
 
         self.db.add(folder)
         self.db.commit()
-        print(f"Added folder to database: {folder_path}")
+        print(f"Added folder to local database: {folder_path}")
+
+        # Sync folder with server
+        try:
+            from server.api_client import FileServiceClient
+            api_client = FileServiceClient()
+
+            # Send folder information to server
+            response = api_client.create_folder(
+                folder_id=folder_id,
+                folder_path=folder_path,
+                folder_name=folder_name,
+                parent_folder_id=parent_folder_id
+            )
+
+            if response.get('success'):
+                print(f"Successfully synced folder {folder_path} with server")
+            else:
+                print(f"Failed to sync folder {folder_path} with server: {response}")
+        except Exception as e:
+            print(f"Error syncing folder {folder_path} with server: {e}")
 
         return folder_id
 

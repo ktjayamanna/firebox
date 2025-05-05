@@ -63,7 +63,7 @@ class ChunkConfirmRequest(BaseModel):
     file_id: str
     chunk_ids: List[str]
     chunk_etags: Optional[List[Dict[str, Any]]] = None
-    
+
     @validator('chunk_etags')
     def validate_chunk_etags(cls, v):
         if v is not None:
@@ -71,11 +71,11 @@ class ChunkConfirmRequest(BaseModel):
                 # Check if chunk_id is present
                 if 'chunk_id' not in chunk_info:
                     raise ValueError(f"chunk_etags[{i}] missing required field 'chunk_id'")
-                
+
                 # Check if etag is present
                 if 'etag' not in chunk_info:
                     raise ValueError(f"chunk_etags[{i}] missing required field 'etag'")
-                
+
                 # Check if fingerprint is present
                 if 'fingerprint' not in chunk_info:
                     raise ValueError(f"chunk_etags[{i}] missing required field 'fingerprint'")
@@ -86,6 +86,16 @@ class ChunkConfirmRequest(BaseModel):
 class ChunkConfirmResponse(BaseModel):
     file_id: str
     confirmed_chunks: int
+    success: bool
+
+class FolderRequest(BaseModel):
+    folder_id: str
+    folder_path: str
+    folder_name: str
+    parent_folder_id: Optional[str] = None
+
+class FolderResponse(BaseModel):
+    folder_id: str
     success: bool
 
 @app.get("/health")
@@ -232,7 +242,7 @@ async def confirm_chunks(confirm_request: ChunkConfirmRequest):
                     logger.error(error_msg)
                     # You could raise an exception here if fingerprints are absolutely required
                     # raise HTTPException(status_code=400, detail=f"Missing required fingerprint for chunk {chunk_id}")
-                    
+
                     # Or set a placeholder fingerprint for debugging
                     fingerprint = f"MISSING-FINGERPRINT-{chunk_id}"
                     print(f"Using placeholder fingerprint: {fingerprint}")
@@ -268,14 +278,14 @@ async def confirm_chunks(confirm_request: ChunkConfirmRequest):
             all_chunks = list(Chunks.scan(Chunks.file_id == file_id))
             print(f"Found {len(all_chunks)} chunks for file {file_id} using scan")
             logger.info(f"Found {len(all_chunks)} chunks for file {file_id} using scan")
-            
+
             # Create a map of chunk_id to chunk object for easier lookup
             chunk_map = {chunk.chunk_id: chunk for chunk in all_chunks}
-            
+
             # Process each chunk from the request
             confirmed_count = 0
             parts = []
-            
+
             for chunk_id in chunk_ids:
                 # Check if the chunk exists in our map
                 if chunk_id in chunk_map:
@@ -285,7 +295,7 @@ async def confirm_chunks(confirm_request: ChunkConfirmRequest):
                 else:
                     print(f"Chunk {chunk_id} not found in database, creating it")
                     logger.info(f"Chunk {chunk_id} not found in database, creating it")
-                    
+
                     # If the chunk doesn't exist, create it
                     if chunk_id in etag_map:
                         chunk_info = etag_map[chunk_id]
@@ -304,18 +314,18 @@ async def confirm_chunks(confirm_request: ChunkConfirmRequest):
                         print(f"No info available for chunk {chunk_id}, skipping")
                         logger.warning(f"No info available for chunk {chunk_id}, skipping")
                         continue
-                
+
                 # Use ETag from client if available
                 if chunk_id in etag_map:
                     etag_value = etag_map[chunk_id]['etag']
                     print(f"DEBUG: Raw ETag from client for chunk {chunk_id}: '{etag_value}'")
                     logger.info(f"DEBUG: Raw ETag from client for chunk {chunk_id}: '{etag_value}'")
-                    
+
                     # Check if ETag has quotes
                     has_quotes = etag_value.startswith('"') and etag_value.endswith('"')
                     print(f"DEBUG: ETag has quotes: {has_quotes}")
                     logger.info(f"DEBUG: ETag has quotes: {has_quotes}")
-                    
+
                     print(f"USING CLIENT ETAG for chunk {chunk_id}: '{etag_value}'")
                     logger.info(f"USING CLIENT ETAG for chunk {chunk_id}: '{etag_value}'")
 
@@ -331,7 +341,7 @@ async def confirm_chunks(confirm_request: ChunkConfirmRequest):
                         chunk.last_synced = datetime.utcnow()
                         print(f"ATTEMPTING TO SAVE CHUNK {chunk.chunk_id} with etag={etag_value}, fingerprint={fingerprint_value}")
                         logger.info(f"ATTEMPTING TO SAVE CHUNK {chunk.chunk_id} with etag={etag_value}, fingerprint={fingerprint_value}")
-                        
+
                         # Save with exception details
                         try:
                             chunk.save()
@@ -354,7 +364,7 @@ async def confirm_chunks(confirm_request: ChunkConfirmRequest):
                                 etag_value = f'"{etag_value}"'
                                 print(f"DEBUG: Added quotes to ETag for S3: '{etag_value}'")
                                 logger.info(f"DEBUG: Added quotes to ETag for S3: '{etag_value}'")
-                            
+
                             parts.append({
                                 'PartNumber': int(chunk.part_number),
                                 'ETag': etag_value
@@ -424,6 +434,49 @@ async def confirm_chunks(confirm_request: ChunkConfirmRequest):
         "confirmed_chunks": confirmed_count,
         "success": confirmed_count == len(chunk_ids)
     }
+
+@app.post("/folders", response_model=FolderResponse)
+async def create_folder(folder_request: FolderRequest):
+    """
+    Create or update a folder in the database
+    """
+    folder_id = folder_request.folder_id
+
+    try:
+        # Check if folder already exists
+        try:
+            existing_folder = Folders.get(folder_id)
+            logger.info(f"Updating existing folder with ID: {folder_id}")
+
+            # Update folder attributes
+            existing_folder.folder_path = folder_request.folder_path
+            existing_folder.folder_name = folder_request.folder_name
+            existing_folder.parent_folder_id = folder_request.parent_folder_id
+            existing_folder.save()
+
+            return {
+                "folder_id": folder_id,
+                "success": True
+            }
+        except Folders.DoesNotExist:
+            # Create new folder
+            logger.info(f"Creating new folder with ID: {folder_id}")
+
+            folder = Folders(
+                folder_id=folder_id,
+                folder_path=folder_request.folder_path,
+                folder_name=folder_request.folder_name,
+                parent_folder_id=folder_request.parent_folder_id
+            )
+            folder.save()
+
+            return {
+                "folder_id": folder_id,
+                "success": True
+            }
+    except Exception as e:
+        logger.error(f"Error creating/updating folder: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to create/update folder: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn
