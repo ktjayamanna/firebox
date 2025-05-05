@@ -46,3 +46,20 @@ class Chunks(Model):
 
     def __repr__(self):
         return f"<Chunks(chunk_id='{self.chunk_id}', file_id='{self.file_id}', created_at='{self.created_at}', last_synced='{self.last_synced}', fingerprint='{self.fingerprint}')>"
+
+class Folders(Model):
+    """
+    PynamoDB model for folder metadata
+    """
+    class Meta:
+        table_name = 'Folders'
+        region = 'us-east-1'
+        host = DYNAMODB_HOST
+
+    folder_id = UnicodeAttribute(hash_key=True)
+    folder_path = UnicodeAttribute()
+    folder_name = UnicodeAttribute()
+    parent_folder_id = UnicodeAttribute(null=True)  # Parent folder ID (null for root)
+
+    def __repr__(self):
+        return f"<Folders(folder_id='{self.folder_id}', folder_path='{self.folder_path}', folder_name='{self.folder_name}')>"
