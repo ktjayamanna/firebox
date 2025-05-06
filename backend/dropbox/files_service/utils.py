@@ -2,6 +2,9 @@ import boto3
 from botocore.client import Config
 from typing import List, Dict
 import config
+from models import FilesMetaData, Chunks, Folders
+
+# S3 Utility Functions
 
 def get_s3_client():
     """
@@ -135,3 +138,19 @@ def abort_multipart_upload(file_id: str, upload_id: str) -> Dict:
     )
 
     return response
+
+# Database Utility Functions
+
+def create_tables():
+    """Create DynamoDB tables if they don't exist"""
+    if not FilesMetaData.exists():
+        FilesMetaData.create_table(read_capacity_units=5, write_capacity_units=5, wait=True)
+        print("Created FilesMetaData table")
+
+    if not Chunks.exists():
+        Chunks.create_table(read_capacity_units=5, write_capacity_units=5, wait=True)
+        print("Created Chunks table")
+
+    if not Folders.exists():
+        Folders.create_table(read_capacity_units=5, write_capacity_units=5, wait=True)
+        print("Created Folders table")

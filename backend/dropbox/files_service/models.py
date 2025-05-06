@@ -64,17 +64,4 @@ class Folders(Model):
     def __repr__(self):
         return f"<Folders(folder_id='{self.folder_id}', folder_path='{self.folder_path}', folder_name='{self.folder_name}')>"
 
-# Create tables if they don't exist
-def create_tables():
-    """Create DynamoDB tables if they don't exist"""
-    if not FilesMetaData.exists():
-        FilesMetaData.create_table(read_capacity_units=5, write_capacity_units=5, wait=True)
-        print("Created FilesMetaData table")
 
-    if not Chunks.exists():
-        Chunks.create_table(read_capacity_units=5, write_capacity_units=5, wait=True)
-        print("Created Chunks table")
-
-    if not Folders.exists():
-        Folders.create_table(read_capacity_units=5, write_capacity_units=5, wait=True)
-        print("Created Folders table")

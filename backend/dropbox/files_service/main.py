@@ -22,8 +22,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-from models import FilesMetaData, Chunks, Folders, create_tables
-from s3_utils import generate_presigned_urls, complete_multipart_upload, abort_multipart_upload
+from models import FilesMetaData, Chunks, Folders
+from utils import create_tables, generate_presigned_urls, complete_multipart_upload, abort_multipart_upload
 import config
 
 logger.info("Files Service starting up")
