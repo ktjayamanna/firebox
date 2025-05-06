@@ -1,10 +1,7 @@
 from pynamodb.models import Model
 from pynamodb.attributes import UnicodeAttribute, UTCDateTimeAttribute, NumberAttribute
 from datetime import datetime, timezone
-import os
-
-# Get DynamoDB endpoint from environment variable or use default for local development
-DYNAMODB_HOST = os.environ.get('DYNAMODB_HOST', 'http://dynamodb-local:8000')
+from config import DYNAMODB_HOST, DYNAMODB_REGION
 
 class FilesMetaData(Model):
     """
@@ -12,7 +9,7 @@ class FilesMetaData(Model):
     """
     class Meta:
         table_name = 'FilesMetaData'
-        region = 'us-east-1'
+        region = DYNAMODB_REGION
         host = DYNAMODB_HOST
 
     file_id = UnicodeAttribute(hash_key=True)
@@ -33,7 +30,7 @@ class Chunks(Model):
     """
     class Meta:
         table_name = 'Chunks'
-        region = 'us-east-1'
+        region = DYNAMODB_REGION
         host = DYNAMODB_HOST
 
     chunk_id = UnicodeAttribute(hash_key=True)
@@ -53,7 +50,7 @@ class Folders(Model):
     """
     class Meta:
         table_name = 'Folders'
-        region = 'us-east-1'
+        region = DYNAMODB_REGION
         host = DYNAMODB_HOST
 
     folder_id = UnicodeAttribute(hash_key=True)
