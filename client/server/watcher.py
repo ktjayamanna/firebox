@@ -285,7 +285,7 @@ class Watcher:
 
                     # Sync folder with server
                     try:
-                        from server.api_client import FileServiceClient
+                        from server.client import FileServiceClient
                         api_client = FileServiceClient()
 
                         # Send folder information to server

@@ -242,7 +242,7 @@ class SyncEngine:
 
             # Sync root folder with server
             try:
-                from server.api_client import FileServiceClient
+                from server.client import FileServiceClient
                 api_client = FileServiceClient()
 
                 # Send root folder information to server
@@ -326,7 +326,7 @@ class SyncEngine:
 
         # Sync folder with server
         try:
-            from server.api_client import FileServiceClient
+            from server.client import FileServiceClient
             api_client = FileServiceClient()
 
             # Send folder information to server
@@ -466,7 +466,7 @@ class SyncEngine:
             file_id: ID of the file
             chunk_size: Size of each chunk in bytes (default: 5MB)
         """
-        from server.api_client import FileServiceClient
+        from server.client import FileServiceClient
 
         # Get file metadata
         file_name = os.path.basename(file_path)
