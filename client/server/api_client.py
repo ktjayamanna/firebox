@@ -4,6 +4,10 @@ import logging
 from typing import List, Dict, Optional, Tuple
 from config import FILES_SERVICE_URL, REQUEST_TIMEOUT, MAX_RETRIES
 import time
+from server.schema import (
+    FileMetaRequest, FileMetaResponse, ChunkETagInfo,
+    ChunkConfirmRequest, ChunkConfirmResponse, FolderRequest, FolderResponse
+)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -40,7 +44,7 @@ class FileServiceClient:
             retry_count: Current retry count
 
         Returns:
-            Dict: Response data
+            Dict: Response data that can be parsed into the appropriate Pydantic model
         """
         url = f"{self.base_url}{endpoint}"
 
@@ -66,7 +70,7 @@ class FileServiceClient:
                 raise
 
     def create_file(self, file_name: str, file_path: str, file_type: str,
-                   folder_id: str, chunk_count: int, file_hash: str) -> Dict:
+                   folder_id: str, chunk_count: int, file_hash: str) -> FileMetaResponse:
         """
         Create a file in the Files Service and get presigned URLs for uploading chunks
 
@@ -79,16 +83,20 @@ class FileServiceClient:
             file_hash: Hash of the file
 
         Returns:
-            Dict: Response containing file_id and presigned_urls
+            FileMetaResponse: Response containing file_id and presigned_urls
         """
-        data = {
-            "file_name": file_name,
-            "file_path": file_path,
-            "file_type": file_type,
-            "folder_id": folder_id,
-            "chunk_count": chunk_count,
-            "file_hash": file_hash
-        }
+        # Create a FileMetaRequest object
+        file_meta_request = FileMetaRequest(
+            file_name=file_name,
+            file_path=file_path,
+            file_type=file_type,
+            folder_id=folder_id,
+            chunk_count=chunk_count,
+            file_hash=file_hash
+        )
+
+        # Convert to dict for the API request
+        data = file_meta_request.model_dump()
 
         logger.info(f"Creating file metadata for {file_path} with {chunk_count} chunks")
         return self._make_request("POST", "/files", data)
@@ -134,7 +142,7 @@ class FileServiceClient:
             logger.error(f"Failed to upload chunk: {e}")
             return False, None
 
-    def create_folder(self, folder_id: str, folder_path: str, folder_name: str, parent_folder_id: Optional[str] = None) -> Dict:
+    def create_folder(self, folder_id: str, folder_path: str, folder_name: str, parent_folder_id: Optional[str] = None) -> FolderResponse:
         """
         Create or update a folder in the Files Service
 
@@ -145,19 +153,23 @@ class FileServiceClient:
             parent_folder_id: ID of the parent folder (None for root)
 
         Returns:
-            Dict: Response data
+            FolderResponse: Response data
         """
-        data = {
-            "folder_id": folder_id,
-            "folder_path": folder_path,
-            "folder_name": folder_name,
-            "parent_folder_id": parent_folder_id
-        }
+        # Create a FolderRequest object
+        folder_request = FolderRequest(
+            folder_id=folder_id,
+            folder_path=folder_path,
+            folder_name=folder_name,
+            parent_folder_id=parent_folder_id
+        )
+
+        # Convert to dict for the API request
+        data = folder_request.model_dump()
 
         logger.info(f"Creating/updating folder {folder_name} with ID {folder_id}")
         return self._make_request("POST", "/folders", data)
 
-    def confirm_upload(self, file_id: str, chunk_data: List[Dict[str, str]]) -> Dict:
+    def confirm_upload(self, file_id: str, chunk_data: List[Dict[str, str]]) -> ChunkConfirmResponse:
         """
         Confirm successful upload of chunks
 
@@ -166,7 +178,7 @@ class FileServiceClient:
             chunk_data: List of dictionaries containing chunk_id, part_number, etag, and fingerprint for each chunk
 
         Returns:
-            Dict: Response data
+            ChunkConfirmResponse: Response data
         """
         # Extract just the chunk IDs for backward compatibility
         chunk_ids = [chunk['chunk_id'] for chunk in chunk_data]
@@ -205,11 +217,15 @@ class FileServiceClient:
             print(f"  Chunk {i+1}: chunk_id={processed_chunk['chunk_id']}, part_number={processed_chunk['part_number']}, etag={processed_chunk['etag']}, fingerprint={processed_chunk['fingerprint']}")
             processed_chunk_data.append(processed_chunk)
 
-        data = {
-            "file_id": file_id,
-            "chunk_ids": chunk_ids,
-            "chunk_etags": processed_chunk_data  # Include the processed chunk data with ETags and fingerprints
-        }
+        # Create a ChunkConfirmRequest object
+        chunk_confirm_request = ChunkConfirmRequest(
+            file_id=file_id,
+            chunk_ids=chunk_ids,
+            chunk_etags=processed_chunk_data  # Include the processed chunk data with ETags and fingerprints
+        )
+
+        # Convert to dict for the API request
+        data = chunk_confirm_request.model_dump()
 
         logger.info(f"Confirming upload for file {file_id} with {len(chunk_ids)} chunks")
         logger.info(f"Full confirmation data: {data}")

@@ -9,12 +9,11 @@ ALEMBIC_DIR="${APP_DIR}/alembic"
 ALEMBIC_ENV="${ALEMBIC_DIR}/env.py"
 ALEMBIC_VERSIONS="${ALEMBIC_DIR}/versions"
 
-# Check if database file exists
-if [ ! -f "$DB_FILE" ]; then
-    echo "Database file not found. Creating new database..."
-    mkdir -p "${APP_DIR}/data"
-    touch "$DB_FILE"
-fi
+# Always recreate the database file to ensure it's clean
+echo "Recreating database file..."
+mkdir -p "${APP_DIR}/data"
+rm -f "$DB_FILE"
+touch "$DB_FILE"
 
 # Set PYTHONPATH to include current directory for module imports
 export PYTHONPATH=$PYTHONPATH:${APP_DIR}
@@ -66,28 +65,24 @@ EOF
     echo "Created alembic.ini file at ${ALEMBIC_INI}."
 fi
 
-# Check if alembic directory exists with env.py
-if [ ! -f "$ALEMBIC_ENV" ]; then
-    echo "Initializing alembic directory structure..."
-    # Remove existing alembic directory if it exists
-    rm -rf "$ALEMBIC_DIR"
-    # Initialize alembic
-    cd "$APP_DIR" && alembic init alembic
-    # Update env.py to use our models
-    sed -i "s|target_metadata = None|from db.models import Base\ntarget_metadata = Base.metadata|" "$ALEMBIC_ENV"
-    echo "Alembic directory initialized at ${ALEMBIC_DIR}."
-fi
+# Always recreate alembic directory to ensure it's up to date with the latest models
+echo "Initializing alembic directory structure..."
+# Remove existing alembic directory if it exists
+rm -rf "$ALEMBIC_DIR"
+# Initialize alembic
+cd "$APP_DIR" && alembic init alembic
+# Update env.py to use our models
+sed -i "s|target_metadata = None|from db.models import Base\ntarget_metadata = Base.metadata|" "$ALEMBIC_ENV"
+echo "Alembic directory initialized at ${ALEMBIC_DIR}."
 
-# Check if we have any migration files
-if [ -z "$(ls -A $ALEMBIC_VERSIONS 2>/dev/null)" ]; then
-    echo "No migration files found. Generating initial migration..."
-    cd "$APP_DIR" && alembic revision --autogenerate -m "Create initial tables"
-    echo "Initial migration generated in ${ALEMBIC_VERSIONS}."
-fi
+# Generate initial migration
+echo "Generating initial migration..."
+cd "$APP_DIR" && alembic revision --autogenerate -m "Create initial tables"
+echo "Initial migration generated in ${ALEMBIC_VERSIONS}."
 
-# Apply all migrations
-echo "Applying database migrations..."
-cd "$APP_DIR" && alembic upgrade head
+# Create tables directly using SQLAlchemy instead of Alembic
+echo "Creating database tables directly using SQLAlchemy..."
+cd "$APP_DIR" && python -c "from db.models import Base; from db.engine import engine; Base.metadata.create_all(bind=engine)"
 
 echo "Database setup complete."
 echo "Starting FastAPI application..."

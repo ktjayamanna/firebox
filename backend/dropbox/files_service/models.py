@@ -1,6 +1,6 @@
 from pynamodb.models import Model
 from pynamodb.attributes import UnicodeAttribute, UTCDateTimeAttribute, NumberAttribute
-from datetime import datetime
+from datetime import datetime, timezone
 import os
 
 # Get DynamoDB endpoint from environment variable or use default for local development
@@ -39,7 +39,7 @@ class Chunks(Model):
     chunk_id = UnicodeAttribute(hash_key=True)
     file_id = UnicodeAttribute(range_key=True)
     part_number = NumberAttribute(default=0)  # Part number for multipart upload
-    created_at = UTCDateTimeAttribute(default=datetime.utcnow)
+    created_at = UTCDateTimeAttribute(default=lambda: datetime.now(timezone.utc))
     last_synced = UTCDateTimeAttribute(null=True)
     fingerprint = UnicodeAttribute()
     etag = UnicodeAttribute(null=True)  # ETag returned by S3 after part upload
@@ -70,11 +70,11 @@ def create_tables():
     if not FilesMetaData.exists():
         FilesMetaData.create_table(read_capacity_units=5, write_capacity_units=5, wait=True)
         print("Created FilesMetaData table")
-    
+
     if not Chunks.exists():
         Chunks.create_table(read_capacity_units=5, write_capacity_units=5, wait=True)
         print("Created Chunks table")
-    
+
     if not Folders.exists():
         Folders.create_table(read_capacity_units=5, write_capacity_units=5, wait=True)
         print("Created Folders table")

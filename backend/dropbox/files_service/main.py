@@ -1,12 +1,15 @@
 import boto3
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, validator
-from typing import List, Optional, Dict, Any
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 import os
 import logging
 import json
+from schema import (
+    FileMetaRequest, PresignedUrlResponse, FileMetaResponse,
+    ChunkETagInfo, ChunkConfirmRequest, ChunkConfirmResponse,
+    FolderRequest, FolderResponse
+)
 
 # Configure logging
 logging.basicConfig(
@@ -34,69 +37,7 @@ app = FastAPI(
     version="0.1.0"
 )
 
-# Pydantic models for request/response
-class FileMetaRequest(BaseModel):
-    file_name: str
-    file_path: str
-    file_type: str
-    folder_id: str
-    chunk_count: int
-    file_hash: Optional[str] = None
-
-class PresignedUrlResponse(BaseModel):
-    chunk_id: str
-    presigned_url: str
-    part_number: Optional[int] = None
-    upload_id: Optional[str] = None
-
-class FileMetaResponse(BaseModel):
-    file_id: str
-    presigned_urls: List[PresignedUrlResponse]
-
-class ChunkETagInfo(BaseModel):
-    chunk_id: str
-    part_number: int
-    etag: str
-    fingerprint: str  # Make fingerprint required
-
-class ChunkConfirmRequest(BaseModel):
-    file_id: str
-    chunk_ids: List[str]
-    chunk_etags: Optional[List[Dict[str, Any]]] = None
-
-    @validator('chunk_etags')
-    def validate_chunk_etags(cls, v):
-        if v is not None:
-            for i, chunk_info in enumerate(v):
-                # Check if chunk_id is present
-                if 'chunk_id' not in chunk_info:
-                    raise ValueError(f"chunk_etags[{i}] missing required field 'chunk_id'")
-
-                # Check if etag is present
-                if 'etag' not in chunk_info:
-                    raise ValueError(f"chunk_etags[{i}] missing required field 'etag'")
-
-                # Check if fingerprint is present
-                if 'fingerprint' not in chunk_info:
-                    raise ValueError(f"chunk_etags[{i}] missing required field 'fingerprint'")
-                elif not chunk_info['fingerprint']:
-                    raise ValueError(f"chunk_etags[{i}] has empty fingerprint")
-        return v
-
-class ChunkConfirmResponse(BaseModel):
-    file_id: str
-    confirmed_chunks: int
-    success: bool
-
-class FolderRequest(BaseModel):
-    folder_id: str
-    folder_path: str
-    folder_name: str
-    parent_folder_id: Optional[str] = None
-
-class FolderResponse(BaseModel):
-    folder_id: str
-    success: bool
+# API endpoints defined below
 
 @app.get("/health")
 def health_check():
@@ -303,7 +244,7 @@ async def confirm_chunks(confirm_request: ChunkConfirmRequest):
                             chunk_id=chunk_id,
                             file_id=file_id,
                             part_number=chunk_info['part_number'],
-                            created_at=datetime.utcnow(),
+                            created_at=datetime.now(timezone.utc),
                             fingerprint=chunk_info['fingerprint'],
                             etag=chunk_info['etag']
                         )
@@ -338,7 +279,7 @@ async def confirm_chunks(confirm_request: ChunkConfirmRequest):
                     try:
                         chunk.etag = etag_value
                         chunk.fingerprint = fingerprint_value
-                        chunk.last_synced = datetime.utcnow()
+                        chunk.last_synced = datetime.now(timezone.utc)
                         print(f"ATTEMPTING TO SAVE CHUNK {chunk.chunk_id} with etag={etag_value}, fingerprint={fingerprint_value}")
                         logger.info(f"ATTEMPTING TO SAVE CHUNK {chunk.chunk_id} with etag={etag_value}, fingerprint={fingerprint_value}")
 
