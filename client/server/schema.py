@@ -6,6 +6,7 @@ class FileMetaRequest(BaseModel):
     """
     Request model for creating a file in the Files Service
     """
+    file_id: str  # Client-provided file ID
     file_name: str
     file_path: str
     file_type: str

@@ -506,6 +506,7 @@ class SyncEngine:
             # Step 1: Send file metadata to file service and get presigned URLs
             print(f"Sending file metadata to file service for {file_path}")
             response = api_client.create_file(
+                file_id=file_id,  # Pass the client-generated file ID
                 file_name=file_name,
                 file_path=file_path,
                 file_type=file_type,
@@ -555,6 +556,7 @@ class SyncEngine:
                     chunk = Chunks(
                         chunk_id=local_chunk_id,
                         file_id=file_id,
+                        part_number=i + 1,  # Part numbers start at 1
                         created_at=datetime.now(timezone.utc),
                         last_synced=None,  # Will be updated after successful upload
                         fingerprint=fingerprint

@@ -69,12 +69,13 @@ class FileServiceClient:
                 logger.error(f"Request failed after {self.max_retries} retries: {e}")
                 raise
 
-    def create_file(self, file_name: str, file_path: str, file_type: str,
+    def create_file(self, file_id: str, file_name: str, file_path: str, file_type: str,
                    folder_id: str, chunk_count: int, file_hash: str) -> FileMetaResponse:
         """
         Create a file in the Files Service and get presigned URLs for uploading chunks
 
         Args:
+            file_id: ID of the file (client-generated)
             file_name: Name of the file
             file_path: Path of the file
             file_type: Type of the file
@@ -87,6 +88,7 @@ class FileServiceClient:
         """
         # Create a FileMetaRequest object
         file_meta_request = FileMetaRequest(
+            file_id=file_id,
             file_name=file_name,
             file_path=file_path,
             file_type=file_type,

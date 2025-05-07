@@ -31,8 +31,8 @@ async def create_file(file_meta: FileMetaRequest):
     """
     Receive file metadata and generate presigned URLs for multipart upload
     """
-    # Generate a unique file ID
-    file_id = str(uuid.uuid4())
+    # Use the file ID provided by the client
+    file_id = file_meta.file_id
 
     try:
         # Create file metadata

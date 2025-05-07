@@ -1,4 +1,4 @@
-from sqlalchemy import Column, PrimaryKeyConstraint, String, ForeignKey, DateTime
+from sqlalchemy import Column, PrimaryKeyConstraint, String, ForeignKey, DateTime, Integer
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
@@ -48,6 +48,7 @@ class Chunks(Base):
     chunk_id = Column(String, nullable=False)
     file_id = Column(String, ForeignKey('files_metadata.file_id'), nullable=False)
     __table_args__ = (PrimaryKeyConstraint('chunk_id', 'file_id'),)
+    part_number = Column(Integer, nullable=True)  # Part number for multipart upload
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     last_synced = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     fingerprint = Column(String, nullable=False)
@@ -56,4 +57,4 @@ class Chunks(Base):
     file = relationship("FilesMetaData", back_populates="chunks")
 
     def __repr__(self):
-        return f"<Chunks(chunk_id='{self.chunk_id}', file_id='{self.file_id}', created_at='{self.created_at}', last_synced='{self.last_synced}', fingerprint='{self.fingerprint}')>"
+        return f"<Chunks(chunk_id='{self.chunk_id}', file_id='{self.file_id}', part_number='{self.part_number}', created_at='{self.created_at}', last_synced='{self.last_synced}', fingerprint='{self.fingerprint}')>"
