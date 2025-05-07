@@ -6,7 +6,7 @@ import logging
 import json
 import boto3
 from botocore.client import Config
-from typing import List, Dict
+from typing import List, Dict, Optional
 import config
 from utils.chunks import update_master_file_fingerprint
 
@@ -207,3 +207,76 @@ def complete_multipart_upload_process(file_id, upload_id, parts, file_metadata):
         print(f"Error completing multipart upload: {str(complete_error)}")
         logger.error(f"Error completing multipart upload: {str(complete_error)}")
         raise HTTPException(status_code=500, detail=f"Error completing multipart upload: {str(complete_error)}")
+
+def generate_download_url(file_id: str, part_number: int, chunk_size: int = config.CHUNK_SIZE) -> Dict[str, str]:
+    """
+    Generate a presigned URL for downloading a specific byte range of a file
+
+    Args:
+        file_id: ID of the file
+        part_number: Part number (1-based)
+        chunk_size: Size of each chunk in bytes (default: 5MB)
+
+    Returns:
+        Dict containing the presigned URL and byte range information
+    """
+    s3_client = get_s3_client()
+
+    # Calculate byte range based on part number and chunk size
+    # Part numbers are 1-based, so we subtract 1 when calculating the start position
+    start_byte = (part_number - 1) * chunk_size
+    end_byte = (part_number * chunk_size) - 1  # End byte is inclusive
+
+    # Generate presigned URL for get_object operation
+    # Note: We don't include the Range header in the presigned URL parameters
+    # The client will need to add this header when making the request
+    presigned_url = s3_client.generate_presigned_url(
+        'get_object',
+        Params={
+            'Bucket': config.S3_BUCKET_NAME,
+            'Key': file_id,
+            'ResponseContentType': 'application/octet-stream',
+            'ResponseContentDisposition': f'attachment; filename="{file_id}_part{part_number}"'
+        },
+        ExpiresIn=config.PRESIGNED_URL_EXPIRATION
+    )
+
+    # Log the byte range for debugging
+    logger.info(f"Generated download URL for part {part_number} with byte range: {start_byte}-{end_byte}")
+
+    return {
+        'presigned_url': presigned_url,
+        'start_byte': start_byte,
+        'end_byte': end_byte,
+        'range_header': f'bytes={start_byte}-{end_byte}'
+    }
+
+def generate_download_urls(file_id: str, part_numbers: List[int], chunk_size: int = config.CHUNK_SIZE) -> List[Dict[str, str]]:
+    """
+    Generate presigned URLs for downloading specific parts of a file
+
+    Args:
+        file_id: ID of the file
+        part_numbers: List of part numbers to generate URLs for
+        chunk_size: Size of each chunk in bytes (default: 5MB)
+
+    Returns:
+        List of dictionaries containing presigned URLs and byte ranges
+    """
+    download_urls = []
+
+    for part_number in part_numbers:
+        try:
+            url_data = generate_download_url(file_id, part_number, chunk_size)
+            download_urls.append({
+                'part_number': part_number,
+                'presigned_url': url_data['presigned_url'],
+                'start_byte': url_data['start_byte'],
+                'end_byte': url_data['end_byte'],
+                'range_header': url_data['range_header']
+            })
+        except Exception as e:
+            logger.error(f"Failed to generate download URL for part {part_number}: {str(e)}")
+            # Continue with other parts even if one fails
+
+    return download_urls

@@ -1,5 +1,5 @@
 from pydantic import BaseModel, field_validator
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Union
 
 class FileMetaRequest(BaseModel):
     """
@@ -117,6 +117,58 @@ class FolderResponse(BaseModel):
     """
     folder_id: str
     success: bool
+
+    model_config = {
+        "extra": "ignore"
+    }
+
+class DownloadChunkInfo(BaseModel):
+    """
+    Model for chunk download information
+    """
+    chunk_id: str
+    part_number: int
+    fingerprint: str
+
+    model_config = {
+        "extra": "ignore"
+    }
+
+class DownloadRequest(BaseModel):
+    """
+    Request model for downloading chunks
+    """
+    file_id: str
+    chunks: List[DownloadChunkInfo]
+
+    model_config = {
+        "extra": "ignore"
+    }
+
+class DownloadUrlResponse(BaseModel):
+    """
+    Response model for a download URL
+    """
+    chunk_id: str
+    part_number: int
+    fingerprint: str
+    presigned_url: str
+    start_byte: Optional[int] = None
+    end_byte: Optional[int] = None
+    range_header: Optional[str] = None
+
+    model_config = {
+        "extra": "ignore"
+    }
+
+class DownloadResponse(BaseModel):
+    """
+    Response model for download request
+    """
+    file_id: str
+    download_urls: List[DownloadUrlResponse]
+    success: bool
+    error_message: Optional[str] = None
 
     model_config = {
         "extra": "ignore"
