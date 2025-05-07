@@ -91,6 +91,7 @@ class ChunkConfirmResponse(BaseModel):
     file_id: str
     confirmed_chunks: int
     success: bool
+    master_file_fingerprint: Optional[str] = None
 
     model_config = {
         "extra": "ignore"

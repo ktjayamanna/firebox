@@ -92,6 +92,7 @@ class ChunkConfirmResponse(BaseModel):
     file_id: str
     confirmed_chunks: int
     success: bool
+    master_file_fingerprint: Optional[str] = None
 
     model_config = {
         "extra": "ignore"
@@ -133,6 +134,7 @@ class FileMetadata(BaseModel):
     file_name: str
     file_type: str
     file_hash: Optional[str] = None
+    master_file_fingerprint: Optional[str] = None
 
     model_config = {
         "extra": "ignore"

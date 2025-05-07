@@ -20,6 +20,7 @@ class FilesMetaData(Model):
     folder_id = UnicodeAttribute()
     upload_id = UnicodeAttribute(null=True)  # Store the multipart upload ID
     complete_etag = UnicodeAttribute(null=True)  # Store the ETag of the completed file
+    master_file_fingerprint = UnicodeAttribute(null=True)  # SHA256 hash of all chunk fingerprints
 
     def __repr__(self):
         return f"<FilesMetaData(file_id='{self.file_id}', file_path='{self.file_path}', file_name='{self.file_name}', file_type='{self.file_type}')>"

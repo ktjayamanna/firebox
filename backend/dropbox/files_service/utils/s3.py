@@ -8,6 +8,7 @@ import boto3
 from botocore.client import Config
 from typing import List, Dict
 import config
+from utils.chunks import update_master_file_fingerprint
 
 logger = logging.getLogger(__name__)
 
@@ -186,6 +187,18 @@ def complete_multipart_upload_process(file_id, upload_id, parts, file_metadata):
         # Store the ETag of the complete file
         file_metadata.complete_etag = response.get('ETag', '')
         file_metadata.save()
+
+        # Calculate and store the master file fingerprint
+        print(f"Calculating master file fingerprint for file {file_id}")
+        logger.info(f"Calculating master file fingerprint for file {file_id}")
+        update_result = update_master_file_fingerprint(file_id)
+
+        if update_result:
+            print(f"Successfully updated master file fingerprint for file {file_id}")
+            logger.info(f"Successfully updated master file fingerprint for file {file_id}")
+        else:
+            print(f"Failed to update master file fingerprint for file {file_id}")
+            logger.warning(f"Failed to update master file fingerprint for file {file_id}")
 
         print(f"Multipart upload completed for file {file_id}")
         logger.info(f"Multipart upload completed for file {file_id}")

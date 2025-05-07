@@ -12,7 +12,7 @@ from schema import (
     FolderRequest, FolderResponse
 )
 from utils.files import create_file_metadata, format_presigned_url_response, cleanup_file_resources
-from utils.chunks import create_chunk_entries, process_etag_info, process_chunks
+from utils.chunks import create_chunk_entries, process_etag_info, process_chunks, calculate_master_file_fingerprint
 from utils.folders import get_or_create_folder
 from utils.s3 import generate_and_store_presigned_urls, complete_multipart_upload_process
 from utils.db import get_file_metadata, get_chunks_for_file
@@ -33,23 +33,23 @@ async def create_file(file_meta: FileMetaRequest):
     """
     # Generate a unique file ID
     file_id = str(uuid.uuid4())
-    
+
     try:
         # Create file metadata
         file_metadata = create_file_metadata(file_id, file_meta)
-        
+
         # Generate presigned URLs
         presigned_urls_data, upload_id = generate_and_store_presigned_urls(file_id, file_meta.chunk_count, file_metadata)
-        
+
         # Create chunk entries
         create_chunk_entries(file_id, presigned_urls_data)
-        
+
         # Format and return response
         return format_presigned_url_response(file_id, presigned_urls_data)
     except Exception as e:
         # If any step fails, clean up and abort
         cleanup_file_resources(file_id)
-        
+
         # Re-raise the original exception
         if isinstance(e, HTTPException):
             raise e
@@ -71,36 +71,44 @@ async def confirm_chunks(confirm_request: ChunkConfirmRequest):
     try:
         # Verify file exists and get metadata
         file_metadata, upload_id = get_file_metadata(file_id)
-        
+
         # Process ETags from the request
         etag_map = process_etag_info(confirm_request.chunk_etags)
-        
+
         # Debug dump of etag_map
         print(f"ETAG_MAP DUMP: {json.dumps(etag_map, indent=2)}")
         logger.info(f"ETAG_MAP DUMP: {json.dumps(etag_map, indent=2)}")
         print(f"CHUNK_IDS WE'RE LOOKING FOR: {chunk_ids}")
         logger.info(f"CHUNK_IDS WE'RE LOOKING FOR: {chunk_ids}")
-        
+
         # Get all chunks for this file
         _, chunk_map = get_chunks_for_file(file_id)
-        
+
         # Process chunks and update with ETags
         confirmed_count, parts = process_chunks(file_id, chunk_ids, etag_map, chunk_map)
-        
+
         # Log the final parts list
         print(f"FINAL PARTS LIST: {json.dumps(parts, indent=2)}")
         logger.info(f"FINAL PARTS LIST: {json.dumps(parts, indent=2)}")
         print(f"CONFIRMED COUNT: {confirmed_count} out of {len(chunk_ids)} requested")
         logger.info(f"CONFIRMED COUNT: {confirmed_count} out of {len(chunk_ids)} requested")
-        
+
         # Complete the multipart upload if we have parts
         if parts:
             complete_multipart_upload_process(file_id, upload_id, parts, file_metadata)
-        
+
+        # Get the master file fingerprint if available
+        master_fingerprint = file_metadata.master_file_fingerprint if hasattr(file_metadata, 'master_file_fingerprint') else None
+
+        # If master fingerprint is not available, try to calculate it
+        if not master_fingerprint and confirmed_count > 0:
+            master_fingerprint = calculate_master_file_fingerprint(file_id)
+
         return {
             "file_id": file_id,
             "confirmed_chunks": confirmed_count,
-            "success": confirmed_count == len(chunk_ids)
+            "success": confirmed_count == len(chunk_ids),
+            "master_file_fingerprint": master_fingerprint
         }
     except Exception as e:
         logger.error(f"Error confirming chunks: {str(e)}")
@@ -114,7 +122,7 @@ async def create_folder(folder_request: FolderRequest):
     Create or update a folder in the database
     """
     folder_id = folder_request.folder_id
-    
+
     try:
         # Get or create folder
         return get_or_create_folder(folder_id, folder_request)

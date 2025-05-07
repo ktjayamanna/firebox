@@ -33,6 +33,7 @@ class FilesMetaData(Base):
     file_name = Column(String, nullable=False)   # Just the filename
     file_hash = Column(String, nullable=True)    # Hash for deduplication
     folder_id = Column(String, ForeignKey('folders.folder_id'), nullable=False)  # Folder containing this file
+    master_file_fingerprint = Column(String, nullable=True)  # SHA256 hash of all chunk fingerprints
 
     # Relationships
     folder = relationship("Folders", back_populates="files")
