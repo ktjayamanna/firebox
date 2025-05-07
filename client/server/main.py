@@ -1,10 +1,13 @@
 from fastapi import FastAPI
 import os
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 
 from server.api import router as api_router
 from server.watcher import Watcher
 from config import SYNC_DIR, CHUNK_DIR
+from db.engine import SessionLocal
+from db.models import System
 
 # Create FastAPI app
 @asynccontextmanager
@@ -39,6 +42,22 @@ try:
     print(f"Successfully removed test file at {test_file_path}")
 except Exception as e:
     print(f"Error accessing chunk directory: {e}")
+
+# Initialize System table with a singleton record if it doesn't exist
+try:
+    db = SessionLocal()
+    system_record = db.query(System).filter(System.id == 1).first()
+    if not system_record:
+        print("Initializing System table with singleton record...")
+        system_record = System(id=1, system_last_sync_time=datetime.now(timezone.utc).isoformat())
+        db.add(system_record)
+        db.commit()
+        print("System table initialized successfully")
+    else:
+        print("System table singleton record already exists")
+    db.close()
+except Exception as e:
+    print(f"Error initializing System table: {e}")
 
 @app.get("/")
 def read_root():

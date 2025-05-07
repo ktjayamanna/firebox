@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from db.engine import get_db
-from db.models import FilesMetaData, Chunks, Folders
+from db.models import FilesMetaData, Chunks, Folders, System
 from typing import List
-from server.schema import FileMetadata, ChunkMetadata, FolderMetadata
+from server.schema import FileMetadata, ChunkMetadata, FolderMetadata, SystemInfo
 
 router = APIRouter()
 
@@ -79,3 +79,14 @@ def get_chunks(file_id: str, db: Session = Depends(get_db)):
         )
         for chunk in chunks
     ]
+
+@router.get("/system", response_model=SystemInfo)
+def get_system_info(db: Session = Depends(get_db)):
+    """Get system information including last sync time"""
+    system = db.query(System).filter(System.id == 1).first()
+    if not system:
+        raise HTTPException(status_code=404, detail="System information not found")
+    return SystemInfo(
+        id=system.id,
+        system_last_sync_time=system.system_last_sync_time
+    )

@@ -167,3 +167,14 @@ class FolderMetadata(BaseModel):
     model_config = {
         "extra": "ignore"
     }
+
+class SystemInfo(BaseModel):
+    """
+    Model for system information in client API responses
+    """
+    id: int
+    system_last_sync_time: Optional[str] = None
+
+    model_config = {
+        "extra": "ignore"
+    }

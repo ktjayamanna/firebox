@@ -1,4 +1,4 @@
-from sqlalchemy import Column, PrimaryKeyConstraint, String, ForeignKey, DateTime, Integer
+from sqlalchemy import Column, PrimaryKeyConstraint, String, ForeignKey, DateTime, Integer, Boolean, CheckConstraint
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
@@ -58,3 +58,17 @@ class Chunks(Base):
 
     def __repr__(self):
         return f"<Chunks(chunk_id='{self.chunk_id}', file_id='{self.file_id}', part_number='{self.part_number}', created_at='{self.created_at}', last_synced='{self.last_synced}', fingerprint='{self.fingerprint}')>"
+
+
+class System(Base):
+    __tablename__ = 'system'
+
+    id = Column(Integer, primary_key=True)
+    system_last_sync_time = Column(String, nullable=True)
+
+    __table_args__ = (
+        CheckConstraint('id = 1', name='check_singleton_id'),
+    )
+
+    def __repr__(self):
+        return f"<System(id='{self.id}', system_last_sync_time='{self.system_last_sync_time}')>"

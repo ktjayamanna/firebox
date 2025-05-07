@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from db.models import FilesMetaData, Chunks, Folders
+from db.models import FilesMetaData, Chunks, Folders, System
 from datetime import datetime, timezone
 import os
 import uuid
@@ -618,6 +618,19 @@ class SyncEngine:
 
                 if confirm_response.get('success'):
                     print(f"Successfully confirmed {confirm_response.get('confirmed_chunks')} chunks")
+
+                    # Update system_last_sync_time in the System table
+                    try:
+                        system_record = self.db.query(System).filter(System.id == 1).first()
+                        if system_record:
+                            current_time = datetime.now(timezone.utc).isoformat()
+                            system_record.system_last_sync_time = current_time
+                            self.db.commit()
+                            print(f"Updated system_last_sync_time to {current_time}")
+                        else:
+                            print("Warning: System record not found, cannot update system_last_sync_time")
+                    except Exception as e:
+                        print(f"Error updating system_last_sync_time: {e}")
                 else:
                     print(f"Failed to confirm uploads: {confirm_response}")
             else:

@@ -87,3 +87,17 @@ SELECT
 WHERE
     NOT EXISTS (SELECT 1 FROM chunks LIMIT 1)
 LIMIT 5;
+
+-- View system table (singleton table)
+.print '\n=== SYSTEM TABLE ===\n'
+SELECT
+    id AS "ID",
+    system_last_sync_time AS "Last Sync Time"
+FROM
+    system
+UNION ALL
+SELECT
+    0 AS "ID",
+    'No system record found' AS "Last Sync Time"
+WHERE
+    NOT EXISTS (SELECT 1 FROM system LIMIT 1);
