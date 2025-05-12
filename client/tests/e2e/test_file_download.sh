@@ -6,10 +6,11 @@
 # the Dropbox sync folder, and then tests downloading specific chunks using the
 # new download endpoint.
 #
-# Note: This script attempts to download chunks using both curl with Range header
-# and AWS CLI's get-object command with range parameter. Due to potential issues
-# with Range headers in presigned URLs, the script uses whichever method produces
-# the larger file.
+# The script follows these steps:
+# 1. Upload: Generates a random text file and copies it to the Dropbox sync folder
+# 2. Process: Verifies the file is processed and chunks are created in the database
+# 3. Download: Retrieves specific chunks using AWS CLI's get-object command with range parameter
+# 4. Verify: Checks the integrity of downloaded chunks against the original file
 #===================================================================================
 
 # Set text colors for better readability
@@ -75,11 +76,6 @@ else
     echo -e "${RED}File not found in container${NC}"
     exit 1
 fi
-
-# Step 4: Wait for file processing
-display_step 4 "Waiting for file processing (15 seconds)"
-echo -e "${CYAN}This allows time for the Dropbox client to detect and process the file.${NC}"
-sleep 15
 
 # Step 5: Check if file is in the database and get file_id
 display_step 5 "Checking if file is in the database"
@@ -200,6 +196,11 @@ NUM_URLS=$(echo "$DOWNLOAD_URLS" | jq -r '. | length')
 
 echo -e "${CYAN}Found $NUM_URLS download URLs${NC}"
 
+# Set AWS credentials for MinIO
+export AWS_ACCESS_KEY_ID=minioadmin
+export AWS_SECRET_ACCESS_KEY=minioadmin
+export AWS_DEFAULT_REGION=us-east-1
+
 for ((i=0; i<$NUM_URLS; i++)); do
     CHUNK_ID=$(echo "$DOWNLOAD_URLS" | jq -r ".[$i].chunk_id")
     PART_NUMBER=$(echo "$DOWNLOAD_URLS" | jq -r ".[$i].part_number")
@@ -223,30 +224,14 @@ for ((i=0; i<$NUM_URLS; i++)); do
         echo -e "${YELLOW}Range header information missing, calculated: $RANGE_HEADER${NC}"
     fi
 
-    # Fix the URL if it's using internal Docker network hostnames
-    # Replace aws-s3:9000 with localhost:9000
-    FIXED_URL=$(echo "$PRESIGNED_URL" | sed 's/http:\/\/aws-s3:9000/http:\/\/localhost:9000/g')
-
-    DOWNLOAD_PATH="$DOWNLOAD_DIR/${CHUNK_ID}_part${PART_NUMBER}.bin"
-
-    echo -e "${CYAN}Downloading chunk $CHUNK_ID (part $PART_NUMBER) to $DOWNLOAD_PATH${NC}"
-    echo -e "${CYAN}Using URL: $FIXED_URL${NC}"
-    echo -e "${CYAN}Using Range header: $RANGE_HEADER (bytes $START_BYTE-$END_BYTE)${NC}"
-
-    # Try two different approaches to download with byte range
-    echo -e "${CYAN}Attempting download with curl and Range header...${NC}"
-    curl -s -H "Range: $RANGE_HEADER" "$FIXED_URL" -o "${DOWNLOAD_PATH}.curl"
-    CURL_SIZE=$(du -b "${DOWNLOAD_PATH}.curl" 2>/dev/null | cut -f1 || echo "0")
-
     # Extract bucket and key from the URL
     BUCKET="dropbox-chunks"
     KEY=$(echo "$PRESIGNED_URL" | grep -o '/dropbox-chunks/[^?]*' | sed 's/\/dropbox-chunks\///')
 
-    echo -e "${CYAN}Attempting download with AWS CLI...${NC}"
-    # Set AWS credentials for MinIO
-    export AWS_ACCESS_KEY_ID=minioadmin
-    export AWS_SECRET_ACCESS_KEY=minioadmin
-    export AWS_DEFAULT_REGION=us-east-1
+    DOWNLOAD_PATH="$DOWNLOAD_DIR/${CHUNK_ID}_part${PART_NUMBER}.bin"
+
+    echo -e "${CYAN}Downloading chunk $CHUNK_ID (part $PART_NUMBER) to $DOWNLOAD_PATH${NC}"
+    echo -e "${CYAN}Using Range header: $RANGE_HEADER (bytes $START_BYTE-$END_BYTE)${NC}"
 
     # Use AWS CLI to download the specific byte range
     aws s3api get-object \
@@ -254,23 +239,7 @@ for ((i=0; i<$NUM_URLS; i++)); do
         --key $KEY \
         --range "$RANGE_HEADER" \
         --endpoint-url http://localhost:9000 \
-        "${DOWNLOAD_PATH}.aws" 2>/dev/null
-
-    AWS_SIZE=$(du -b "${DOWNLOAD_PATH}.aws" 2>/dev/null | cut -f1 || echo "0")
-
-    # Compare sizes and use the larger file
-    echo -e "${CYAN}Curl download size: $CURL_SIZE bytes${NC}"
-    echo -e "${CYAN}AWS CLI download size: $AWS_SIZE bytes${NC}"
-
-    if [ "$AWS_SIZE" -gt "$CURL_SIZE" ]; then
-        echo -e "${CYAN}Using AWS CLI download (larger file)${NC}"
-        mv "${DOWNLOAD_PATH}.aws" "$DOWNLOAD_PATH"
-        rm -f "${DOWNLOAD_PATH}.curl"
-    else
-        echo -e "${CYAN}Using curl download (larger file)${NC}"
-        mv "${DOWNLOAD_PATH}.curl" "$DOWNLOAD_PATH"
-        rm -f "${DOWNLOAD_PATH}.aws"
-    fi
+        "$DOWNLOAD_PATH" 2>/dev/null
 
     if [ $? -eq 0 ] && [ -f "$DOWNLOAD_PATH" ]; then
         CHUNK_SIZE=$(du -h "$DOWNLOAD_PATH" | cut -f1)
