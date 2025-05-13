@@ -3,7 +3,15 @@
 # Dropbox Client Test File Upload Script
 #===================================================================================
 # Description: This script creates a randomly generated text file and moves it to
-# the Dropbox sync folder, then confirms the upload by listing the files.
+# the Dropbox sync folder, then confirms the upload by verifying data at multiple levels.
+#
+# The script follows these steps:
+# 1. Generate: Creates a random text file of specified size on the host machine
+# 2. Upload: Copies the file to the Dropbox client container's sync directory
+# 3. Verify: Confirms the file exists in the client container's filesystem
+# 4. Database: Checks that file metadata is properly stored in the client's SQLite database
+# 5. Chunks: Verifies that file chunks are created and have valid fingerprints in the client's database
+# 6. Storage: Examines chunk files on disk in the client container's chunk directory
 #
 #===================================================================================
 
@@ -63,11 +71,6 @@ else
     echo -e "${RED}File not found in container${NC}"
     exit 1
 fi
-
-# Step 4: Wait for file processing
-echo -e "\n${YELLOW}Step 4: Waiting for file processing (15 seconds)...${NC}"
-echo -e "${CYAN}This allows time for the Dropbox client to detect and process the file.${NC}"
-sleep 15
 
 # Step 5: Check if file is in the database
 echo -e "\n${YELLOW}Step 5: Checking if file is in the database...${NC}"

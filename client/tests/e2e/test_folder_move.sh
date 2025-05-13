@@ -6,6 +6,13 @@
 # directory, then moves it to the sync folder and verifies that all folder and
 # file metadata are properly synced.
 #
+# The script follows these steps:
+# 1. Create: Builds a nested folder structure with files outside the sync directory
+# 2. Move: Moves the entire folder structure into the client container's sync directory
+# 3. Verify Local: Checks that folders and files are properly recorded in the client's SQLite database
+# 4. Verify Server: Confirms that folder structure and files are synced to the DynamoDB tables
+# 5. Validate: Ensures parent-child relationships are maintained throughout the hierarchy
+#
 #===================================================================================
 
 # Set text colors for better readability
@@ -66,9 +73,9 @@ else
 fi
 
 # Step 4: Wait for folder processing
-echo -e "\n${YELLOW}Step 4: Waiting for folder processing (20 seconds)...${NC}"
+echo -e "\n${YELLOW}Step 4: Waiting for folder processing (3 seconds)...${NC}"
 echo -e "${CYAN}This allows time for the Dropbox client to detect and process the moved folder.${NC}"
-sleep 20
+sleep 3
 
 # Step 5: Check if folders are in the database
 echo -e "\n${YELLOW}Step 5: Checking if folders are in the database...${NC}"

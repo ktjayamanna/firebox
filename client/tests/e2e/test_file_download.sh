@@ -11,6 +11,10 @@
 # 2. Process: Verifies the file is processed and chunks are created in the database
 # 3. Download: Retrieves specific chunks using AWS CLI's get-object command with range parameter
 # 4. Verify: Checks the integrity of downloaded chunks against the original file
+#
+# Note: This script downloads chunks using AWS CLI's get-object command with range parameter
+# to ensure consistent handling of byte ranges in presigned URLs.
+
 #===================================================================================
 
 # Set text colors for better readability
