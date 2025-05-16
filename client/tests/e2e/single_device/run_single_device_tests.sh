@@ -63,8 +63,8 @@ echo -e "${GREEN}Dropbox Client Single Device E2E Test Suite${NC}"
 echo -e "${BLUE}=========================================${NC}"
 echo -e "Starting test run at: $(date)"
 echo -e "Logging to: ${LOG_FILE}"
-# Create a symlink to the log file in the current directory for easier access
-SYMLINK_LOG_FILE="./latest_test_run.log"
+# Create a symlink to the log file in the single_device directory for easier access
+SYMLINK_LOG_FILE="${SCRIPT_DIR}/latest_test_run.log"
 ln -sf "${LOG_FILE}" "${SYMLINK_LOG_FILE}"
 echo -e "Symlink created: ${SYMLINK_LOG_FILE}"
 echo -e "\n"
