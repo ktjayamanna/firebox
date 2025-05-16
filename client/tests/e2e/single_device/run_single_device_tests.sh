@@ -69,10 +69,7 @@ echo -e "${GREEN}Dropbox Client Single Device E2E Test Suite${NC}"
 echo -e "${BLUE}=========================================${NC}"
 echo -e "Starting test run at: $(date)"
 echo -e "Logging to: ${LOG_FILE}"
-# Create a symlink to the log file in the single_device directory for easier access
-SYMLINK_LOG_FILE="${SCRIPT_DIR}/latest_test_run.log"
-ln -sf "${LOG_FILE}" "${SYMLINK_LOG_FILE}"
-echo -e "Symlink created: ${SYMLINK_LOG_FILE}"
+# Don't create a symlink in the single_device directory
 echo -e "\n"
 
 # Make all test scripts executable
@@ -98,7 +95,6 @@ echo -e "Passed: ${GREEN}${PASSED_TESTS}${NC}"
 echo -e "Failed: ${RED}${FAILED_TESTS}${NC}"
 echo -e "Test run completed at: $(date)"
 echo -e "Log file: ${LOG_FILE}"
-echo -e "Symlink to log file: ${SYMLINK_LOG_FILE} (for easier access)"
 
 # Final result message
 if [ $FAILED_TESTS -eq 0 ]; then

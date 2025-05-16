@@ -10,6 +10,5 @@ garage
 client/tests/logs/*.log
 client/tests/e2e/logs/*.log
 client/tests/e2e/logs/single_device_test_run_*
-client/tests/e2e/single_device/latest_test_run.log
 # downloaded chunks from tests
 /tmp/downloaded_chunks_*
