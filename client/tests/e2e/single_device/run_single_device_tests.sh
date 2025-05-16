@@ -18,7 +18,7 @@ NC='\033[0m' # No Color
 # Define constants
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-LOG_DIR="${SCRIPT_DIR}/../../logs"  # Go up two levels to reach client/tests/logs
+LOG_DIR="${SCRIPT_DIR}/../logs"  # Go up one level to reach client/tests/e2e/logs
 LOG_FILE="${LOG_DIR}/single_device_test_run_${TIMESTAMP}.log"
 TEST_DIR="${SCRIPT_DIR}"
 PASSED_TESTS=0
