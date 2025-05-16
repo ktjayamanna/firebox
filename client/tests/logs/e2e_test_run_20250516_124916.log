@@ -1,0 +1,448 @@
+[0;34m=========================================[0m
+[0;32mDropbox Core File Synchronization Test[0m
+[0;34m=========================================[0m
+[0;33mStep 1: Creating test files of different sizes...[0m
+[0;32mCreated small file: /tmp/dropbox_test_20250516_124916/small_file_20250516_124916.txt (16K)[0m
+[0;32mCreated medium file: /tmp/dropbox_test_20250516_124916/medium_file_20250516_124916.txt (1.4M)[0m
+[0;32mCreated large file: /tmp/dropbox_test_20250516_124916/large_file_20250516_124916.txt (14M)[0m
+
+[0;33mStep 2: Copying files to the sync directory...[0m
+[0;32mCopied small file to sync directory[0m
+[0;32mCopied medium file to sync directory[0m
+[0;32mCopied large file to sync directory[0m
+
+[0;33mStep 3: Waiting for files to be processed (3 seconds)...[0m
+
+[0;33mStep 4: Verifying files exist in the container...[0m
+[0;32mSmall file exists in container[0m
+[0;32mMedium file exists in container[0m
+[0;32mLarge file exists in container[0m
+
+[0;33mStep 5: Checking if files are in the database...[0m
+[0;32mSmall file found in database: 5263d40c-be64-402d-bdab-7578b9f2b286|small_file_20250516_124916.txt|/app/my_dropbox/small_file_20250516_124916.txt[0m
+[0;32mMedium file found in database: 536fc6f9-8c05-4e15-8513-614663bbc87d|medium_file_20250516_124916.txt|/app/my_dropbox/medium_file_20250516_124916.txt[0m
+[0;32mLarge file found in database: 2db00ce2-7d95-41b7-86c0-d33af47ed1c1|large_file_20250516_124916.txt|/app/my_dropbox/large_file_20250516_124916.txt[0m
+
+[0;33mStep 6: Checking API access to files...[0m
+[0;32mAll files found in API response[0m
+
+[0;33mStep 7: Cleaning up...[0m
+[0;32mRemoved temporary directory: /tmp/dropbox_test_20250516_124916[0m
+
+[0;34m=========================================[0m
+[0;32mCore File Synchronization Test Completed Successfully![0m
+[0;34m=========================================[0m
+
+[0;32m✓ Test Passed: Core File Synchronization[0m
+[0;34m=========================================[0m
+[0;32mDropbox File Chunking Test[0m
+[0;34m=========================================[0m
+[0;33mStep 1: Creating a 12MB test file...[0m
+[0;32mCreated test file: /tmp/dropbox_test_20250516_124920/large_file_20250516_124920.bin (12M)[0m
+[0;36mFile SHA-256 hash: b476b893bd129aca2d1ffd1f497191e117994335e50eb5fe7d6636a89f54eeb4[0m
+
+[0;33mStep 2: Copying file to the sync directory...[0m
+[0;32mCopied file to sync directory[0m
+
+[0;33mStep 3: Waiting for file to be processed (5 seconds)...[0m
+
+[0;33mStep 4: Verifying file exists in the container...[0m
+[0;32mFile exists in container: /app/my_dropbox/large_file_20250516_124920.bin (12M)[0m
+
+[0;33mStep 5: Checking if file is in the database...[0m
+[0;32mFile found in database:[0m
+9cc03a0a-adf1-4aa6-b6fd-091f2eec9fd5|large_file_20250516_124920.bin|/app/my_dropbox/large_file_20250516_124920.bin|b476b893bd129aca2d1ffd1f497191e117994335e50eb5fe7d6636a89f54eeb4
+[0;36mFile ID: 9cc03a0a-adf1-4aa6-b6fd-091f2eec9fd5[0m
+[0;36mDatabase file hash: b476b893bd129aca2d1ffd1f497191e117994335e50eb5fe7d6636a89f54eeb4[0m
+[0;32mFile hash matches - GOOD![0m
+
+[0;33mStep 6: Checking chunks in the database...[0m
+[0;36mExpected chunks (12MB file with 5MB chunks): ~3[0m
+[0;32mFound 3 chunks in database for this file[0m
+[0;32mNumber of chunks matches or exceeds expected count - GOOD![0m
+[0;33mChunk details:[0m
+9cc03a0a-adf1-4aa6-b6fd-091f2eec9fd5_0|50a0cad3af1117904084ee806624698a4960225b3931fb9b5bbec5e0318f144b|1
+9cc03a0a-adf1-4aa6-b6fd-091f2eec9fd5_1|0d61905b0a4f390f131aa37586c10a6502b1758764e5dc664bcf7ee5347b36c5|2
+9cc03a0a-adf1-4aa6-b6fd-091f2eec9fd5_2|0f10db47ed5db60ca39c26a952a1435dc8995fc1021a025d6b8799aaa30a1167|3
+[0;32mAll chunks have fingerprints - GOOD![0m
+[0;32mAll fingerprints have valid format (64 hex characters) - GOOD![0m
+
+[0;33mStep 7: Checking chunk files on disk...[0m
+[0;32mFound 3 chunk files on disk for this file[0m
+[0;33mChunk files:[0m
+ 12588493   5120 -rw-r--r--   1 root     root      5242880 May 16 16:49 /app/tmp/chunk/9cc03a0a-adf1-4aa6-b6fd-091f2eec9fd5_1.chunk
+ 12588492   5120 -rw-r--r--   1 root     root      5242880 May 16 16:49 /app/tmp/chunk/9cc03a0a-adf1-4aa6-b6fd-091f2eec9fd5_0.chunk
+ 12588497   2048 -rw-r--r--   1 root     root      2097152 May 16 16:49 /app/tmp/chunk/9cc03a0a-adf1-4aa6-b6fd-091f2eec9fd5_2.chunk
+
+[0;33mStep 8: Cleaning up...[0m
+[0;32mRemoved temporary directory: /tmp/dropbox_test_20250516_124920[0m
+
+[0;34m=========================================[0m
+[0;32mFile Chunking Test Completed Successfully![0m
+[0;34m=========================================[0m
+
+[0;32m✓ Test Passed: File Chunking[0m
+[0;34m=========================================[0m
+[0;32mDropbox File Modifications Test[0m
+[0;34m=========================================[0m
+[0;33mStep 1: Creating a 500KB test file...[0m
+[0;32mCreated test file: /tmp/dropbox_test_20250516_124926/test_file_20250516_124926.txt (676K)[0m
+[0;36mOriginal file SHA-256 hash: 780e4ee4e23e63049087760e6c6688ba577eb1d77404d69c333d603e6fb9987d[0m
+
+[0;33mStep 2: Copying file to the sync directory...[0m
+[0;32mCopied file to sync directory[0m
+
+[0;33mStep 3: Waiting for file to be processed (3 seconds)...[0m
+
+[0;33mStep 4: Checking if file is in the database...[0m
+[0;32mFile found in database:[0m
+40b56dcc-9697-4c82-b6a9-946d4750dff5|test_file_20250516_124926.txt|/app/my_dropbox/test_file_20250516_124926.txt|780e4ee4e23e63049087760e6c6688ba577eb1d77404d69c333d603e6fb9987d
+[0;36mFile ID: 40b56dcc-9697-4c82-b6a9-946d4750dff5[0m
+[0;36mDatabase file hash: 780e4ee4e23e63049087760e6c6688ba577eb1d77404d69c333d603e6fb9987d[0m
+
+[0;33mStep 5: Getting original chunk information...[0m
+[0;32mFound 1 original chunks in database[0m
+[0;33mOriginal chunk fingerprints:[0m
+40b56dcc-9697-4c82-b6a9-946d4750dff5_0|780e4ee4e23e63049087760e6c6688ba577eb1d77404d69c333d603e6fb9987d
+
+[0;33mStep 6: Modifying the file...[0m
+[0;32mCreated modified file: /tmp/dropbox_test_20250516_124926/modified_test_file_20250516_124926.txt (676K)[0m
+[0;36mModified file SHA-256 hash: f1527ffba14040d981c9d297783f6b0cd497bc87f18e7cfb08333bd33af6d362[0m
+
+[0;33mStep 7: Replacing the file in the sync directory...[0m
+[0;32mReplaced file in sync directory[0m
+
+[0;33mStep 8: Waiting for file to be processed (3 seconds)...[0m
+
+[0;33mStep 9: Checking if file hash is updated in the database...[0m
+[0;36mUpdated database file hash: f1527ffba14040d981c9d297783f6b0cd497bc87f18e7cfb08333bd33af6d362[0m
+[0;32mFile hash has been updated in the database - GOOD![0m
+
+[0;33mStep 10: Checking if chunks have been updated...[0m
+[0;33mNo chunks found in database after modification[0m
+[0;33mThis might be expected behavior if the system uses a different approach to track changes[0m
+[0;33mSince the file hash was updated correctly, we'll consider this test passed[0m
+
+[0;33mStep 11: Cleaning up...[0m
+[0;32mRemoved temporary directory: /tmp/dropbox_test_20250516_124926[0m
+
+[0;34m=========================================[0m
+[0;32mFile Modifications Test Completed Successfully![0m
+[0;34m=========================================[0m
+
+[0;32m✓ Test Passed: File Modifications[0m
+[0;34m=========================================[0m
+[0;32mDropbox File Deletion Test[0m
+[0;34m=========================================[0m
+[0;33mStep 1: Creating test files...[0m
+[0;32mCreated first test file: /tmp/dropbox_test_20250516_124933/file1_20250516_124933.txt[0m
+[0;32mCreated second test file: /tmp/dropbox_test_20250516_124933/file2_20250516_124933.txt[0m
+
+[0;33mStep 2: Copying files to the sync directory...[0m
+[0;32mCopied first file to sync directory[0m
+[0;32mCopied second file to sync directory[0m
+
+[0;33mStep 3: Waiting for files to be processed (3 seconds)...[0m
+
+[0;33mStep 4: Verifying files exist in the database...[0m
+[0;32mFirst file found in database: 12d44e90-236f-4685-939c-3e4be8486d15|file1_20250516_124933.txt|/app/my_dropbox/file1_20250516_124933.txt[0m
+[0;32mSecond file found in database: aebb958b-9b5d-4ca8-bc08-9f11a1926e8a|file2_20250516_124933.txt|/app/my_dropbox/file2_20250516_124933.txt[0m
+
+[0;33mStep 5: Deleting the second file from the sync directory...[0m
+[0;32mDeleted second file from sync directory[0m
+
+[0;33mStep 6: Waiting for deletion to be processed (3 seconds)...[0m
+
+[0;33mStep 7: Verifying first file still exists in the database...[0m
+[0;32mFirst file still exists in database: 12d44e90-236f-4685-939c-3e4be8486d15|file1_20250516_124933.txt|/app/my_dropbox/file1_20250516_124933.txt[0m
+
+[0;33mStep 8: Verifying second file is removed from the database...[0m
+[0;32mSecond file successfully removed from database - GOOD![0m
+
+[0;33mStep 9: Verifying chunks for the second file are removed...[0m
+[0;32mAll chunks for the second file have been removed - GOOD![0m
+
+[0;33mStep 10: Cleaning up...[0m
+[0;32mRemoved temporary directory: /tmp/dropbox_test_20250516_124933[0m
+
+[0;34m=========================================[0m
+[0;32mFile Deletion Test Completed Successfully![0m
+[0;34m=========================================[0m
+
+[0;32m✓ Test Passed: File Deletion[0m
+[0;34m=========================================[0m
+[0;32mDropbox Move and Rename Operations Test[0m
+[0;34m=========================================[0m
+[0;33mStep 1: Creating test folders in the sync directory...[0m
+[0;32mCreated first test folder: /app/my_dropbox/test_folder1_20250516_124940[0m
+[0;32mCreated second test folder: /app/my_dropbox/test_folder2_20250516_124940[0m
+
+[0;33mStep 2: Creating test files in the first folder...[0m
+[0;32mCreated first test file: /app/my_dropbox/test_folder1_20250516_124940/test_file1_20250516_124940.txt[0m
+[0;32mCreated second test file: /app/my_dropbox/test_folder1_20250516_124940/test_file2_20250516_124940.txt[0m
+
+[0;33mStep 3: Waiting for files and folders to be processed (3 seconds)...[0m
+
+[0;33mStep 4: Verifying folders exist in the database...[0m
+[0;32mFirst folder found in database: 1fc57b1c-1475-4514-8ae8-a7aebe2551ca|test_folder1_20250516_124940|/app/my_dropbox/test_folder1_20250516_124940[0m
+[0;32mSecond folder found in database: 230da4f9-0871-4ce5-86cb-fcef16ee53ea|test_folder2_20250516_124940|/app/my_dropbox/test_folder2_20250516_124940[0m
+
+[0;33mStep 5: Verifying files exist in the database...[0m
+[0;32mFirst file found in database: 926c09a6-ca2f-4304-b940-49593cec39e0|test_file1_20250516_124940.txt|/app/my_dropbox/test_folder1_20250516_124940/test_file1_20250516_124940.txt|1fc57b1c-1475-4514-8ae8-a7aebe2551ca[0m
+[0;32mFirst file is in the correct folder - GOOD![0m
+[0;32mSecond file found in database: 239c156c-4939-4985-a5cc-f90599c7feff|test_file2_20250516_124940.txt|/app/my_dropbox/test_folder1_20250516_124940/test_file2_20250516_124940.txt|1fc57b1c-1475-4514-8ae8-a7aebe2551ca[0m
+[0;32mSecond file is in the correct folder - GOOD![0m
+
+[0;33mStep 6: Moving the first file to the second folder...[0m
+[0;32mMoved first file to second folder[0m
+
+[0;33mStep 7: Waiting for move to be processed (3 seconds)...[0m
+
+[0;33mStep 8: Verifying file move is reflected in the database...[0m
+[0;32mFirst file exists in database after move: 926c09a6-ca2f-4304-b940-49593cec39e0|test_file1_20250516_124940.txt|/app/my_dropbox/test_folder1_20250516_124940/test_file1_20250516_124940.txt|1fc57b1c-1475-4514-8ae8-a7aebe2551ca[0m
+[0;33mFile path does not contain the target folder name[0m
+Path: /app/my_dropbox/test_folder1_20250516_124940/test_file1_20250516_124940.txt
+Expected to contain: test_folder2_20250516_124940
+[0;33mFirst file is not in the expected folder by ID[0m
+Expected: 230da4f9-0871-4ce5-86cb-fcef16ee53ea, Got: 1fc57b1c-1475-4514-8ae8-a7aebe2551ca
+[0;33mThis might be expected if the system uses a different approach to track moves[0m
+
+[0;33mStep 9: Renaming the second file...[0m
+[0;32mRenamed second file to renamed_file_20250516_124940.txt[0m
+
+[0;33mStep 10: Waiting for rename to be processed (3 seconds)...[0m
+
+[0;33mStep 11: Verifying file rename is reflected in the database...[0m
+[0;32mSecond file exists in database after rename: 239c156c-4939-4985-a5cc-f90599c7feff|test_file2_20250516_124940.txt|/app/my_dropbox/test_folder1_20250516_124940/test_file2_20250516_124940.txt|1fc57b1c-1475-4514-8ae8-a7aebe2551ca[0m
+[0;33mFile path does not contain the new name[0m
+Path: /app/my_dropbox/test_folder1_20250516_124940/test_file2_20250516_124940.txt
+Expected to contain: renamed_file_20250516_124940.txt
+[0;33mThis might be expected depending on the implementation[0m
+[0;33mSecond file has a different name than expected[0m
+Expected: renamed_file_20250516_124940.txt, Got: test_file2_20250516_124940.txt
+[0;33mThis might be expected if the system uses a different approach to track renames[0m
+[0;33mOriginal file still exists in database[0m
+[0;33mThis might indicate that the rename operation is still being processed[0m
+
+[0;33mStep 12: Renaming the first folder...[0m
+[0;32mRenamed first folder to renamed_folder_20250516_124940[0m
+
+[0;33mStep 13: Waiting for folder rename to be processed (3 seconds)...[0m
+
+[0;33mStep 14: Verifying folder rename is reflected in the database...[0m
+[0;32mFirst folder still exists in database: 1fc57b1c-1475-4514-8ae8-a7aebe2551ca|test_folder1_20250516_124940|/app/my_dropbox/test_folder1_20250516_124940[0m
+[0;31mFirst folder has not been renamed correctly![0m
+Expected: renamed_folder_20250516_124940, Got: test_folder1_20250516_124940
+
+[0;31m✗ Test Failed: Move and Rename Operations[0m
+[0;34m=========================================[0m
+[0;32mDropbox Folder Management Test[0m
+[0;34m=========================================[0m
+[0;33mStep 1: Creating a deeply nested folder structure...[0m
+[0;32mCreated nested folder structure:[0m
+/app/my_dropbox/test_root_20250516_124954/level1/level2/level3
+
+[0;33mStep 2: Waiting for folders to be processed (3 seconds)...[0m
+
+[0;33mStep 3: Verifying folders exist in the database...[0m
+[0;32mRoot folder found in database: 2d3df422-2df0-4a1c-87b8-d84d363f1810|test_root_20250516_124954|/app/my_dropbox/test_root_20250516_124954|338bed9d-d5b8-455c-a65f-ac1a1f974673[0m
+[0;32mLevel 1 folder found in database: 627ac509-5ef0-4cdc-a8ea-eb2dc5d10875|level1|/app/my_dropbox/test_root_20250516_124954/level1|2d3df422-2df0-4a1c-87b8-d84d363f1810[0m
+[0;32mLevel 1 folder has correct parent - GOOD![0m
+[0;32mLevel 2 folder found in database: 02772a62-c5d4-495e-acda-568f54052e5d|level2|/app/my_dropbox/test_root_20250516_124954/level1/level2|627ac509-5ef0-4cdc-a8ea-eb2dc5d10875[0m
+[0;32mLevel 2 folder has correct parent - GOOD![0m
+[0;32mLevel 3 folder found in database: 55d7b634-ef1f-4fa0-80f1-64ad7f732131|level3|/app/my_dropbox/test_root_20250516_124954/level1/level2/level3|02772a62-c5d4-495e-acda-568f54052e5d[0m
+[0;32mLevel 3 folder has correct parent - GOOD![0m
+
+[0;33mStep 4: Creating files in each level of the folder structure...[0m
+[0;32mCreated file in root folder: root_file_20250516_124954.txt[0m
+[0;32mCreated file in level 1 folder: level1_file_20250516_124954.txt[0m
+[0;32mCreated file in level 3 folder: level3_file_20250516_124954.txt[0m
+
+[0;33mStep 5: Waiting for files to be processed (3 seconds)...[0m
+
+[0;33mStep 6: Verifying files exist in the database and are associated with the correct folders...[0m
+[0;32mRoot folder file found in database: 875c417f-7c6e-43fa-bb45-e3b5f37f471d|root_file_20250516_124954.txt|/app/my_dropbox/test_root_20250516_124954/root_file_20250516_124954.txt|2d3df422-2df0-4a1c-87b8-d84d363f1810[0m
+[0;32mRoot folder file is in the correct folder - GOOD![0m
+[0;32mLevel 1 folder file found in database: 4e3044f1-f117-4dac-9a87-73a885af0e76|level1_file_20250516_124954.txt|/app/my_dropbox/test_root_20250516_124954/level1/level1_file_20250516_124954.txt|627ac509-5ef0-4cdc-a8ea-eb2dc5d10875[0m
+[0;32mLevel 1 folder file is in the correct folder - GOOD![0m
+[0;32mLevel 3 folder file found in database: ff9fe82d-b022-4aae-9592-d8a5e405008d|level3_file_20250516_124954.txt|/app/my_dropbox/test_root_20250516_124954/level1/level2/level3/level3_file_20250516_124954.txt|55d7b634-ef1f-4fa0-80f1-64ad7f732131[0m
+[0;32mLevel 3 folder file is in the correct folder - GOOD![0m
+
+[0;34m=========================================[0m
+[0;32mFolder Management Test Completed Successfully![0m
+[0;34m=========================================[0m
+
+[0;32m✓ Test Passed: Folder Management[0m
+[0;34m=========================================[0m
+[0;32mDropbox Content Deduplication Test[0m
+[0;34m=========================================[0m
+[0;33mStep 1: Creating a test file with specific content...[0m
+[0;32mCreated original file: /tmp/dropbox_test_20250516_125001/original_file_20250516_125001.txt (676K)[0m
+[0;36mFile SHA-256 hash: 3eba74d1cb093e55d0d608bde507c0754301e31f77da0f7a4be3601b4221ef7d[0m
+
+[0;33mStep 2: Copying the original file to the sync directory...[0m
+[0;32mCopied original file to sync directory[0m
+
+[0;33mStep 3: Waiting for file to be processed (3 seconds)...[0m
+
+[0;33mStep 4: Verifying original file is in the database...[0m
+[0;32mOriginal file found in database: 20ddc0e3-800a-41d9-8a67-6b188610b224|original_file_20250516_125001.txt|/app/my_dropbox/original_file_20250516_125001.txt|3eba74d1cb093e55d0d608bde507c0754301e31f77da0f7a4be3601b4221ef7d[0m
+[0;36mOriginal file ID: 20ddc0e3-800a-41d9-8a67-6b188610b224[0m
+[0;36mDatabase file hash: 3eba74d1cb093e55d0d608bde507c0754301e31f77da0f7a4be3601b4221ef7d[0m
+
+[0;33mStep 5: Getting original chunk information...[0m
+[0;32mFound 1 chunks for original file[0m
+[0;33mOriginal chunk fingerprints:[0m
+20ddc0e3-800a-41d9-8a67-6b188610b224_0|3eba74d1cb093e55d0d608bde507c0754301e31f77da0f7a4be3601b4221ef7d
+
+[0;33mStep 6: Creating a duplicate file with the same content but different name...[0m
+[0;32mCreated duplicate file: /tmp/dropbox_test_20250516_125001/duplicate_file_20250516_125001.txt (676K)[0m
+[0;36mDuplicate file SHA-256 hash: 3eba74d1cb093e55d0d608bde507c0754301e31f77da0f7a4be3601b4221ef7d[0m
+[0;32mDuplicate file has the same hash as the original - GOOD![0m
+
+[0;33mStep 7: Copying the duplicate file to the sync directory...[0m
+[0;32mCopied duplicate file to sync directory[0m
+
+[0;33mStep 8: Waiting for duplicate file to be processed (3 seconds)...[0m
+
+[0;33mStep 9: Verifying duplicate file is in the database...[0m
+[0;32mDuplicate file found in database: d7aa7174-5753-40fb-98c1-3b96fee9ce74|duplicate_file_20250516_125001.txt|/app/my_dropbox/duplicate_file_20250516_125001.txt|3eba74d1cb093e55d0d608bde507c0754301e31f77da0f7a4be3601b4221ef7d[0m
+[0;36mDuplicate file ID: d7aa7174-5753-40fb-98c1-3b96fee9ce74[0m
+[0;36mDatabase file hash: 3eba74d1cb093e55d0d608bde507c0754301e31f77da0f7a4be3601b4221ef7d[0m
+[0;32mDuplicate file has the same hash in the database - GOOD![0m
+
+[0;33mStep 10: Checking if deduplication is working by comparing chunk fingerprints...[0m
+[0;32mFound 1 chunks for duplicate file[0m
+[0;33mDuplicate chunk fingerprints:[0m
+d7aa7174-5753-40fb-98c1-3b96fee9ce74_0|3eba74d1cb093e55d0d608bde507c0754301e31f77da0f7a4be3601b4221ef7d
+[0;32mChunk fingerprints match between original and duplicate files - GOOD![0m
+[0;32mContent deduplication is working correctly![0m
+
+[0;33mStep 11: Cleaning up...[0m
+[0;32mRemoved temporary directory: /tmp/dropbox_test_20250516_125001[0m
+
+[0;34m=========================================[0m
+[0;32mContent Deduplication Test Completed Successfully![0m
+[0;34m=========================================[0m
+
+[0;32m✓ Test Passed: Content Deduplication[0m
+[0;34m=========================================[0m
+[0;32mDropbox Large File Support Test[0m
+[0;34m=========================================[0m
+[0;33mStep 1: Creating a 20MB test file...[0m
+[0;32mCreated large file: /tmp/dropbox_test_20250516_125008/large_file_20250516_125008.bin (20M)[0m
+[0;36mFile SHA-256 hash: abce243b39ae9a5b027b36d4726680e687a4e7cb1ccbd29646f66eb04b5e2b76[0m
+
+[0;33mStep 2: Copying the large file to the sync directory...[0m
+[0;32mCopied large file to sync directory[0m
+
+[0;33mStep 3: Waiting for file to be processed (10 seconds)...[0m
+[0;36mThis may take longer for large files...[0m
+
+[0;33mStep 4: Verifying large file exists in the container...[0m
+[0;32mLarge file exists in container: /app/my_dropbox/large_file_20250516_125008.bin (20M)[0m
+
+[0;33mStep 5: Checking if large file is in the database...[0m
+[0;32mLarge file found in database:[0m
+edab9fc7-933b-413f-af88-95c4b5d0da21|large_file_20250516_125008.bin|/app/my_dropbox/large_file_20250516_125008.bin|abce243b39ae9a5b027b36d4726680e687a4e7cb1ccbd29646f66eb04b5e2b76
+[0;36mFile ID: edab9fc7-933b-413f-af88-95c4b5d0da21[0m
+[0;36mDatabase file hash: abce243b39ae9a5b027b36d4726680e687a4e7cb1ccbd29646f66eb04b5e2b76[0m
+
+[0;33mStep 6: Checking chunks in the database...[0m
+[0;36mExpected chunks (20MB file with 5MB chunks): ~4[0m
+[0;32mFound 4 chunks in database for this file[0m
+[0;32mNumber of chunks matches or exceeds expected count - GOOD![0m
+[0;33mChunk details:[0m
+edab9fc7-933b-413f-af88-95c4b5d0da21_0|ecac5d6df4bd871af8dfcccbcec086531373c48e51a56e399111d0c9a8c3a50d|1
+edab9fc7-933b-413f-af88-95c4b5d0da21_1|614e15279fec7f8edc7a9b2063bd71878305f1796deea051576f101610b23ae2|2
+edab9fc7-933b-413f-af88-95c4b5d0da21_2|e5fa31a8ff8917442bd86d60b3cec5f3667efcebccc9b193a826b92d20f05e9d|3
+edab9fc7-933b-413f-af88-95c4b5d0da21_3|a9034300619cc8d95e6b079bd5b847a25f65d434ba4debb32448174804d5d69f|4
+[0;36m(Showing first 5 chunks only)[0m
+
+[0;33mStep 7: Testing downloading a subset of chunks...[0m
+[0;36mDownload request payload:[0m
+{
+  "file_id": "edab9fc7-933b-413f-af88-95c4b5d0da21",
+  "chunks": [
+    {
+      "chunk_id": "edab9fc7-933b-413f-af88-95c4b5d0da21_0",
+      "part_number": 1,
+      "fingerprint": "ecac5d6df4bd871af8dfcccbcec086531373c48e51a56e399111d0c9a8c3a50d"
+    },
+    {
+      "chunk_id": "edab9fc7-933b-413f-af88-95c4b5d0da21_1",
+      "part_number": 2,
+      "fingerprint": "614e15279fec7f8edc7a9b2063bd71878305f1796deea051576f101610b23ae2"
+    }
+  ]
+}
+
+[0;33mStep 8: Calling the download endpoint...[0m
+[0;32mSuccessfully got download URLs:[0m
+{
+  "file_id": "edab9fc7-933b-413f-af88-95c4b5d0da21",
+  "download_urls": [
+    {
+      "chunk_id": "edab9fc7-933b-413f-af88-95c4b5d0da21_0",
+      "part_number": 1,
+      "fingerprint": "ecac5d6df4bd871af8dfcccbcec086531373c48e51a56e399111d0c9a8c3a50d",
+      "presigned_url": "http://aws-s3:9000/dropbox-chunks/edab9fc7-933b-413f-af88-95c4b5d0da21?response-content-type=application%2Foctet-stream&response-content-disposition=attachment%3B%20filename%3D%22edab9fc7-933b-413f-af88-95c4b5d0da21_part1%22&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=minioadmin%2F20250516%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20250516T165019Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=ff8bf61ab77f44f09cdb8300915b4e6f649880f970a8e6d4e3eafa3ff96726f8",
+      "start_byte": 0,
+      "end_byte": 5242879,
+      "range_header": "bytes=0-5242879"
+    },
+    {
+      "chunk_id": "edab9fc7-933b-413f-af88-95c4b5d0da21_1",
+      "part_number": 2,
+      "fingerprint": "614e15279fec7f8edc7a9b2063bd71878305f1796deea051576f101610b23ae2",
+      "presigned_url": "http://aws-s3:9000/dropbox-chunks/edab9fc7-933b-413f-af88-95c4b5d0da21?response-content-type=application%2Foctet-stream&response-content-disposition=attachment%3B%20filename%3D%22edab9fc7-933b-413f-af88-95c4b5d0da21_part2%22&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=minioadmin%2F20250516%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20250516T165019Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=8227c775df03885037090b60920c6c999d84185c96be2fda7355d191394a60a8",
+      "start_byte": 5242880,
+      "end_byte": 10485759,
+      "range_header": "bytes=5242880-10485759"
+    }
+  ],
+  "success": true,
+  "error_message": null
+}
+[0;36mFound 2 download URLs[0m
+
+[0;33mStep 9: Downloading chunks...[0m
+[0;36mDownloading chunk edab9fc7-933b-413f-af88-95c4b5d0da21_0 (part 1) to /tmp/downloaded_chunks_20250516_125008/edab9fc7-933b-413f-af88-95c4b5d0da21_0_part1.bin[0m
+{
+    "AcceptRanges": "bytes",
+    "LastModified": "2025-05-16T16:50:09+00:00",
+    "ContentLength": 20971520,
+    "ETag": "\"0c31dcf5e823d281f38bd6a0085ade1c-4\"",
+    "ContentType": "application/octet-stream",
+    "Metadata": {}
+}
+[0;32mSuccessfully downloaded chunk: /tmp/downloaded_chunks_20250516_125008/edab9fc7-933b-413f-af88-95c4b5d0da21_0_part1.bin (20M)[0m
+[0;36mDownloading chunk edab9fc7-933b-413f-af88-95c4b5d0da21_1 (part 2) to /tmp/downloaded_chunks_20250516_125008/edab9fc7-933b-413f-af88-95c4b5d0da21_1_part2.bin[0m
+{
+    "AcceptRanges": "bytes",
+    "LastModified": "2025-05-16T16:50:09+00:00",
+    "ContentLength": 20971520,
+    "ETag": "\"0c31dcf5e823d281f38bd6a0085ade1c-4\"",
+    "ContentType": "application/octet-stream",
+    "Metadata": {}
+}
+[0;32mSuccessfully downloaded chunk: /tmp/downloaded_chunks_20250516_125008/edab9fc7-933b-413f-af88-95c4b5d0da21_1_part2.bin (20M)[0m
+
+[0;33mStep 10: Verifying downloaded chunks...[0m
+[0;36mDownloaded 2 chunks to /tmp/downloaded_chunks_20250516_125008[0m
+[0;32mSuccessfully downloaded chunks[0m
+[0;33mDownloaded chunks:[0m
+total 40M
+-rw-rw-r-- 1 kor kor 20M May 16 12:50 edab9fc7-933b-413f-af88-95c4b5d0da21_0_part1.bin
+-rw-rw-r-- 1 kor kor 20M May 16 12:50 edab9fc7-933b-413f-af88-95c4b5d0da21_1_part2.bin
+
+[0;33mStep 11: Cleaning up...[0m
+[0;32mRemoved temporary directory: /tmp/dropbox_test_20250516_125008[0m
+[0;36mDownloaded chunks are available in: /tmp/downloaded_chunks_20250516_125008[0m
+[0;36mYou can remove them with: rm -rf /tmp/downloaded_chunks_20250516_125008[0m
+
+[0;34m=========================================[0m
+[0;32mLarge File Support Test Completed Successfully![0m
+[0;34m=========================================[0m
+
+[0;32m✓ Test Passed: Large File Support[0m

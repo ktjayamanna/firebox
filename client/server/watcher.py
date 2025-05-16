@@ -71,6 +71,13 @@ class EventHandler(pyinotify.ProcessEvent):
         Args:
             event: Inotify event
         """
+        # Store the source path for later use in process_IN_MOVED_TO
+        if hasattr(event, 'cookie'):
+            # Store the path with the cookie as the key
+            if not hasattr(self, 'move_cookies'):
+                self.move_cookies = {}
+            self.move_cookies[event.cookie] = event.pathname
+
         if event.dir:
             print(f"Directory moved from: {event.pathname}")
             if self.callback:
@@ -87,14 +94,31 @@ class EventHandler(pyinotify.ProcessEvent):
         Args:
             event: Inotify event
         """
+        # Get the source path if available
+        source_path = None
+        if hasattr(event, 'cookie') and hasattr(self, 'move_cookies') and event.cookie in self.move_cookies:
+            source_path = self.move_cookies[event.cookie]
+            # Remove the cookie after use
+            del self.move_cookies[event.cookie]
+
         if event.dir:
             print(f"Directory moved to: {event.pathname}")
-            if self.callback:
-                self.callback('move_to_dir', event.pathname)
+            if source_path:
+                print(f"This is a rename/move operation from {source_path} to {event.pathname}")
+                if self.callback:
+                    self.callback('rename_dir', (source_path, event.pathname))
+            else:
+                if self.callback:
+                    self.callback('move_to_dir', event.pathname)
         else:
             print(f"File moved to: {event.pathname}")
-            if self.callback:
-                self.callback('move_to', event.pathname)
+            if source_path:
+                print(f"This is a rename/move operation from {source_path} to {event.pathname}")
+                if self.callback:
+                    self.callback('rename_file', (source_path, event.pathname))
+            else:
+                if self.callback:
+                    self.callback('move_to', event.pathname)
 
 class Watcher:
     def __init__(self, sync_dir: str = SYNC_DIR):
@@ -361,6 +385,53 @@ class Watcher:
                                 print(f"Processed file in moved directory: {file_path} with ID: {file_id}")
                         except Exception as e:
                             print(f"Error processing file {file_path}: {e}")
+
+            elif event_type == 'rename_file':
+                # Handle file rename/move operation
+                old_path, new_path = path  # path is a tuple (old_path, new_path)
+                print(f"Handling file rename/move from {old_path} to {new_path}")
+
+                # Update the file location in the database
+                success = sync_engine.update_file_location(old_path, new_path)
+                if success:
+                    print(f"Successfully updated file location from {old_path} to {new_path}")
+                else:
+                    print(f"Failed to update file location, falling back to normal upload")
+                    # Fallback to normal upload if update fails
+                    file_id = sync_engine.upload_file(new_path)
+                    print(f"Uploaded file as new: {new_path} with ID: {file_id}")
+
+            elif event_type == 'rename_dir':
+                # Handle directory rename/move operation
+                old_path, new_path = path  # path is a tuple (old_path, new_path)
+                print(f"Handling directory rename/move from {old_path} to {new_path}")
+
+                # Update the folder location in the database
+                success = sync_engine.update_folder_location(old_path, new_path)
+                if success:
+                    print(f"Successfully updated folder location from {old_path} to {new_path}")
+                else:
+                    print(f"Failed to update folder location, falling back to normal folder creation")
+                    # Fallback to normal folder creation if update fails
+                    folder_id = sync_engine._ensure_folder_tree(new_path)
+                    print(f"Created folder as new: {new_path} with ID: {folder_id}")
+
+                    # Scan the directory for any existing files
+                    print(f"Scanning directory: {new_path}")
+                    for root, dirs, files in os.walk(new_path):
+                        for filename in files:
+                            file_path = os.path.join(root, filename)
+
+                            # Skip hidden files
+                            if filename.startswith('.'):
+                                continue
+
+                            try:
+                                # Process the file
+                                file_id = sync_engine.upload_file(file_path)
+                                print(f"Processed file in directory: {file_path} with ID: {file_id}")
+                            except Exception as e:
+                                print(f"Error processing file {file_path}: {e}")
 
             elif event_type == 'move_to':
                 # Handle file moved to the sync directory

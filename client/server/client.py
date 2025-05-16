@@ -171,6 +171,54 @@ class FileServiceClient:
         logger.info(f"Creating/updating folder {folder_name} with ID {folder_id}")
         return self._make_request("POST", "/folders", data)
 
+    def update_file(self, file_id: str, file_name: str, file_path: str, folder_id: str) -> Dict:
+        """
+        Update file metadata in the Files Service
+
+        Args:
+            file_id: ID of the file to update
+            file_name: New name of the file
+            file_path: New path of the file
+            folder_id: New folder ID for the file
+
+        Returns:
+            Dict: Response data
+        """
+        # Create a request payload
+        data = {
+            "file_id": file_id,
+            "file_name": file_name,
+            "file_path": file_path,
+            "folder_id": folder_id
+        }
+
+        logger.info(f"Updating file {file_name} with ID {file_id}")
+        return self._make_request("POST", "/files/update", data)
+
+    def update_folder(self, folder_id: str, folder_name: str, folder_path: str, parent_folder_id: Optional[str] = None) -> Dict:
+        """
+        Update folder metadata in the Files Service
+
+        Args:
+            folder_id: ID of the folder to update
+            folder_name: New name of the folder
+            folder_path: New path of the folder
+            parent_folder_id: New parent folder ID
+
+        Returns:
+            Dict: Response data
+        """
+        # Create a request payload
+        data = {
+            "folder_id": folder_id,
+            "folder_name": folder_name,
+            "folder_path": folder_path,
+            "parent_folder_id": parent_folder_id
+        }
+
+        logger.info(f"Updating folder {folder_name} with ID {folder_id}")
+        return self._make_request("POST", "/folders/update", data)
+
     def confirm_upload(self, file_id: str, chunk_data: List[Dict[str, str]]) -> ChunkConfirmResponse:
         """
         Confirm successful upload of chunks

@@ -382,6 +382,203 @@ class SyncEngine:
 
         return True
 
+    def update_file_location(self, old_path: str, new_path: str) -> bool:
+        """
+        Update a file's location in the database when it's moved or renamed
+
+        Args:
+            old_path: Original path of the file
+            new_path: New path of the file
+
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        try:
+            # Find the file by its old path
+            file_metadata = self.db.query(FilesMetaData).filter(
+                FilesMetaData.file_path == old_path
+            ).first()
+
+            if not file_metadata:
+                print(f"File not found at path {old_path}")
+                return False
+
+            # Extract new file name and parent path
+            new_file_name = os.path.basename(new_path)
+            new_parent_path = os.path.dirname(new_path)
+
+            # Ensure parent directory exists in the database and get its folder_id
+            new_folder_id = self.ensure_parent_directories(new_parent_path)
+
+            # Update file metadata
+            file_metadata.file_path = new_path
+            file_metadata.file_name = new_file_name
+            file_metadata.folder_id = new_folder_id
+
+            # Commit changes
+            self.db.commit()
+            print(f"Updated file location from {old_path} to {new_path}")
+
+            # Sync changes with server
+            try:
+                from server.client import FileServiceClient
+                api_client = FileServiceClient()
+
+                # Send updated file information to server
+                response = api_client.update_file(
+                    file_id=file_metadata.file_id,
+                    file_name=new_file_name,
+                    file_path=new_path,
+                    folder_id=new_folder_id
+                )
+
+                if response.get('success'):
+                    print(f"Successfully synced file location update with server")
+                else:
+                    print(f"Failed to sync file location update with server: {response}")
+            except Exception as e:
+                print(f"Error syncing file location update with server: {e}")
+
+            return True
+
+        except Exception as e:
+            print(f"Error updating file location: {e}")
+            self.db.rollback()
+            return False
+
+    def update_folder_location(self, old_path: str, new_path: str) -> bool:
+        """
+        Update a folder's location in the database when it's moved or renamed
+
+        Args:
+            old_path: Original path of the folder
+            new_path: New path of the folder
+
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        try:
+            # Find the folder by its old path
+            folder = self.db.query(Folders).filter(
+                Folders.folder_path == old_path
+            ).first()
+
+            if not folder:
+                print(f"Folder not found at path {old_path}")
+                return False
+
+            # Extract new folder name and parent path
+            new_folder_name = os.path.basename(new_path)
+            new_parent_path = os.path.dirname(new_path)
+
+            # Find parent folder
+            parent_folder = None
+            if new_parent_path != self.sync_dir:
+                parent_folder = self.db.query(Folders).filter(
+                    Folders.folder_path == new_parent_path
+                ).first()
+
+                if not parent_folder:
+                    # Create parent folder if it doesn't exist
+                    parent_folder_id = self._ensure_folder_tree(new_parent_path)
+                    parent_folder = self.db.query(Folders).filter(
+                        Folders.folder_id == parent_folder_id
+                    ).first()
+
+            # Update folder metadata
+            old_folder_path = folder.folder_path
+            folder.folder_path = new_path
+            folder.folder_name = new_folder_name
+            if parent_folder:
+                folder.parent_folder_id = parent_folder.folder_id
+            else:
+                # If no parent folder, this is a top-level folder
+                root_folder = self._get_or_create_root_folder()
+                folder.parent_folder_id = root_folder.folder_id
+
+            # Update paths for all files in this folder
+            files_to_update = self.db.query(FilesMetaData).filter(
+                FilesMetaData.folder_id == folder.folder_id
+            ).all()
+
+            for file in files_to_update:
+                # Calculate new file path
+                new_file_path = file.file_path.replace(old_folder_path, new_path)
+
+                # Update file path
+                file.file_path = new_file_path
+
+            # Update paths for all subfolders recursively
+            self._update_subfolder_paths(folder.folder_id, old_folder_path, new_path)
+
+            # Commit changes
+            self.db.commit()
+            print(f"Updated folder location from {old_path} to {new_path}")
+
+            # Sync changes with server
+            try:
+                from server.client import FileServiceClient
+                api_client = FileServiceClient()
+
+                # Send updated folder information to server
+                response = api_client.update_folder(
+                    folder_id=folder.folder_id,
+                    folder_name=new_folder_name,
+                    folder_path=new_path,
+                    parent_folder_id=folder.parent_folder_id
+                )
+
+                if response.get('success'):
+                    print(f"Successfully synced folder location update with server")
+                else:
+                    print(f"Failed to sync folder location update with server: {response}")
+            except Exception as e:
+                print(f"Error syncing folder location update with server: {e}")
+
+            return True
+
+        except Exception as e:
+            print(f"Error updating folder location: {e}")
+            self.db.rollback()
+            return False
+
+    def _update_subfolder_paths(self, parent_folder_id: str, old_base_path: str, new_base_path: str):
+        """
+        Recursively update paths for all subfolders of a folder
+
+        Args:
+            parent_folder_id: ID of the parent folder
+            old_base_path: Original base path
+            new_base_path: New base path
+        """
+        # Get all subfolders
+        subfolders = self.db.query(Folders).filter(
+            Folders.parent_folder_id == parent_folder_id
+        ).all()
+
+        for subfolder in subfolders:
+            # Calculate new subfolder path
+            old_subfolder_path = subfolder.folder_path
+            new_subfolder_path = old_subfolder_path.replace(old_base_path, new_base_path)
+
+            # Update subfolder path
+            subfolder.folder_path = new_subfolder_path
+
+            # Update paths for all files in this subfolder
+            files_to_update = self.db.query(FilesMetaData).filter(
+                FilesMetaData.folder_id == subfolder.folder_id
+            ).all()
+
+            for file in files_to_update:
+                # Calculate new file path
+                new_file_path = file.file_path.replace(old_base_path, new_base_path)
+
+                # Update file path
+                file.file_path = new_file_path
+
+            # Recursively update subfolders
+            self._update_subfolder_paths(subfolder.folder_id, old_base_path, new_base_path)
+
     def scan_sync_directory(self):
         """
         Scan the sync directory for files and directories and process any that aren't already in the database
