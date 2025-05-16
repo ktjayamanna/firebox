@@ -43,16 +43,16 @@ FAILED_TESTS=0
 run_test() {
     local test_name=$1
     local test_script=$2
-    
+
     TOTAL_TESTS=$((TOTAL_TESTS + 1))
-    
+
     echo -e "\n${BLUE}----------------------------------------${NC}"
     echo -e "${YELLOW}Running Test: ${test_name}${NC}"
     echo -e "${BLUE}----------------------------------------${NC}"
-    
+
     # Run the test script and capture output
     $test_script | tee -a $LOG_FILE
-    
+
     # Check the exit status of the test script
     if [ ${PIPESTATUS[0]} -eq 0 ]; then
         echo -e "\n${GREEN}✓ Test Passed: ${test_name}${NC}" | tee -a $LOG_FILE
@@ -82,6 +82,7 @@ run_test "Move and Rename Operations" "./$TEST_DIR/test_move_rename.sh"
 run_test "Folder Management" "./$TEST_DIR/test_folder_management.sh"
 run_test "Content Deduplication" "./$TEST_DIR/test_content_deduplication.sh"
 run_test "Large File Support" "./$TEST_DIR/test_large_file_support.sh"
+run_test "File Modification Behavior" "./$TEST_DIR/test_file_modification_behavior.sh"
 
 # Print test summary
 echo -e "\n${BLUE}=========================================${NC}"

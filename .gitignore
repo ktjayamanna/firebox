@@ -6,3 +6,8 @@
 __pycache__
 data
 garage
+# test logs
+client/tests/logs/*.log
+client/tests/logs/single_device_test_run_*
+# downloaded chunks from tests
+/tmp/downloaded_chunks_*
