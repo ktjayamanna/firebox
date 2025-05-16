@@ -28,6 +28,12 @@ TOTAL_TESTS=0
 # Create log directory if it doesn't exist
 mkdir -p $LOG_DIR
 
+# Create an empty log file
+touch $LOG_FILE
+
+# Redirect all output to the log file and the terminal
+exec > >(tee -a $LOG_FILE) 2>&1
+
 # Function to run a test and track its result
 run_test() {
     local test_name=$1
