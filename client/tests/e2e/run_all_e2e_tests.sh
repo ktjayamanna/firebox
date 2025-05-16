@@ -31,6 +31,18 @@ echo -e "${YELLOW}Running Single Device Tests...${NC}"
 ${SINGLE_DEVICE_DIR}/run_single_device_tests.sh
 SINGLE_DEVICE_RESULT=$?
 
+# Check if multi-device directory exists and has test files
+if [ -d "$MULTI_DEVICE_DIR" ] && [ -f "${MULTI_DEVICE_DIR}/run_multi_device_tests.sh" ]; then
+    # Run multi-device tests
+    echo -e "\n${YELLOW}Running Multi-Device Tests...${NC}"
+    chmod +x ${MULTI_DEVICE_DIR}/run_multi_device_tests.sh
+    ${MULTI_DEVICE_DIR}/run_multi_device_tests.sh
+    MULTI_DEVICE_RESULT=$?
+else
+    echo -e "\n${YELLOW}Multi-Device tests not found or not ready. Skipping.${NC}"
+    MULTI_DEVICE_RESULT=0
+fi
+
 # Print test summary
 echo -e "\n${BLUE}=========================================${NC}"
 echo -e "${GREEN}Test Summary${NC}"
@@ -42,8 +54,16 @@ else
     echo -e "Single Device Tests: ${RED}FAILED${NC}"
 fi
 
+if [ -d "$MULTI_DEVICE_DIR" ] && [ -f "${MULTI_DEVICE_DIR}/run_multi_device_tests.sh" ]; then
+    if [ $MULTI_DEVICE_RESULT -eq 0 ]; then
+        echo -e "Multi-Device Tests: ${GREEN}PASSED${NC}"
+    else
+        echo -e "Multi-Device Tests: ${RED}FAILED${NC}"
+    fi
+fi
+
 # Final result message
-if [ $SINGLE_DEVICE_RESULT -eq 0 ]; then
+if [ $SINGLE_DEVICE_RESULT -eq 0 ] && [ $MULTI_DEVICE_RESULT -eq 0 ]; then
     echo -e "\n${GREEN}All tests passed!${NC}"
     exit 0
 else

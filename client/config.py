@@ -1,4 +1,9 @@
 import os
+import socket
+
+# Client identification
+# Use the CLIENT_ID environment variable if set, otherwise use the hostname
+CLIENT_ID = os.environ.get("CLIENT_ID", socket.gethostname())
 
 # Sync directory
 SYNC_DIR = os.environ.get("SYNC_DIR", "/app/my_dropbox")
