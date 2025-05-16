@@ -18,7 +18,7 @@ NC='\033[0m' # No Color
 # Define constants
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-LOG_DIR="${SCRIPT_DIR}/../logs"
+LOG_DIR="${SCRIPT_DIR}/../../logs"  # Go up two levels to reach client/tests/logs
 LOG_FILE="${LOG_DIR}/single_device_test_run_${TIMESTAMP}.log"
 TEST_DIR="${SCRIPT_DIR}"
 PASSED_TESTS=0
@@ -63,6 +63,10 @@ echo -e "${GREEN}Dropbox Client Single Device E2E Test Suite${NC}"
 echo -e "${BLUE}=========================================${NC}"
 echo -e "Starting test run at: $(date)"
 echo -e "Logging to: ${LOG_FILE}"
+# Create a symlink to the log file in the current directory for easier access
+SYMLINK_LOG_FILE="./latest_test_run.log"
+ln -sf "${LOG_FILE}" "${SYMLINK_LOG_FILE}"
+echo -e "Symlink created: ${SYMLINK_LOG_FILE}"
 echo -e "\n"
 
 # Make all test scripts executable
@@ -88,6 +92,7 @@ echo -e "Passed: ${GREEN}${PASSED_TESTS}${NC}"
 echo -e "Failed: ${RED}${FAILED_TESTS}${NC}"
 echo -e "Test run completed at: $(date)"
 echo -e "Log file: ${LOG_FILE}"
+echo -e "Symlink to log file: ${SYMLINK_LOG_FILE} (for easier access)"
 
 # Final result message
 if [ $FAILED_TESTS -eq 0 ]; then
