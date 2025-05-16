@@ -82,7 +82,9 @@ run_test "Move and Rename Operations" "./$TEST_DIR/test_move_rename.sh"
 run_test "Folder Management" "./$TEST_DIR/test_folder_management.sh"
 run_test "Content Deduplication" "./$TEST_DIR/test_content_deduplication.sh"
 run_test "Large File Support" "./$TEST_DIR/test_large_file_support.sh"
-run_test "File Modification Behavior" "./$TEST_DIR/test_file_modification_behavior.sh"
+
+# Note: File Modification Behavior test has been moved to the single_device folder
+# To run it, use: client/tests/e2e/single_device/run_single_device_tests.sh
 
 # Print test summary
 echo -e "\n${BLUE}=========================================${NC}"
