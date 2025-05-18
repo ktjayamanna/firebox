@@ -143,16 +143,23 @@ class SyncEngine:
         else:
             # Create new file metadata for this path
             file_id = str(uuid.uuid4())
+
+            # Use the file hash as the master file fingerprint
+            master_file_fingerprint = file_hash
+
             file_metadata = FilesMetaData(
                 file_id=file_id,
                 file_type=file_type,
                 file_path=file_path,
                 folder_id=folder_id,
                 file_name=file_name,
-                file_hash=file_hash
+                file_hash=file_hash,
+                master_file_fingerprint=master_file_fingerprint
             )
             self.db.add(file_metadata)
             self.db.commit()
+
+            print(f"Set master_file_fingerprint to {master_file_fingerprint}")
 
             # Process file chunks for new file
             self._process_file_chunks(file_path, file_id)

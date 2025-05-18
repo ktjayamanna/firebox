@@ -120,13 +120,22 @@ check_db_for_file() {
     docker exec $container bash -c "sqlite3 /app/data/dropbox.db 'SELECT file_path FROM files_metadata WHERE file_path=\"$file_path\";'"
 }
 
-# Function to get file fingerprint from database
-get_file_fingerprint() {
+# Function to get chunk fingerprints from database
+get_chunk_fingerprints() {
     local container=$1
     local file_path=$2
 
-    echo -e "${YELLOW}Getting fingerprint for file $file_path in $container...${NC}" >&2
-    docker exec $container bash -c "sqlite3 /app/data/dropbox.db 'SELECT master_file_fingerprint FROM files_metadata WHERE file_path=\"$file_path\";'" | tr -d '\r\n'
+    echo -e "${YELLOW}Getting chunk fingerprints for file $file_path in $container...${NC}" >&2
+    # First get the file_id
+    local file_id=$(docker exec $container bash -c "sqlite3 /app/data/dropbox.db 'SELECT file_id FROM files_metadata WHERE file_path=\"$file_path\";'" | tr -d '\r\n')
+
+    if [ -z "$file_id" ]; then
+        echo -e "${RED}File ID not found for $file_path${NC}" >&2
+        return 1
+    fi
+
+    # Then get all chunk fingerprints for this file
+    docker exec $container bash -c "sqlite3 /app/data/dropbox.db 'SELECT fingerprint FROM chunks WHERE file_id=\"$file_id\" ORDER BY part_number;'" | tr '\n' '|'
 }
 
 # Function to compare fingerprints between containers
@@ -135,19 +144,19 @@ compare_fingerprints() {
     local container2=$2
     local file_path=$3
 
-    echo -e "${YELLOW}Comparing fingerprints between $container1 and $container2 for file $file_path...${NC}"
+    echo -e "${YELLOW}Comparing chunk fingerprints between $container1 and $container2 for file $file_path...${NC}"
 
-    local fingerprint1=$(get_file_fingerprint $container1 $file_path)
-    local fingerprint2=$(get_file_fingerprint $container2 $file_path)
+    local fingerprints1=$(get_chunk_fingerprints $container1 $file_path)
+    local fingerprints2=$(get_chunk_fingerprints $container2 $file_path)
 
-    echo -e "${YELLOW}Fingerprint on $container1: $fingerprint1${NC}"
-    echo -e "${YELLOW}Fingerprint on $container2: $fingerprint2${NC}"
+    echo -e "${YELLOW}Chunk fingerprints on $container1: $fingerprints1${NC}"
+    echo -e "${YELLOW}Chunk fingerprints on $container2: $fingerprints2${NC}"
 
-    if [ "$fingerprint1" = "$fingerprint2" ] && [ -n "$fingerprint1" ]; then
-        echo -e "${GREEN}Fingerprints match.${NC}"
+    if [ "$fingerprints1" = "$fingerprints2" ] && [ -n "$fingerprints1" ]; then
+        echo -e "${GREEN}Chunk fingerprints match.${NC}"
         return 0
     else
-        echo -e "${RED}Fingerprints do not match or are empty.${NC}"
+        echo -e "${RED}Chunk fingerprints do not match or are empty.${NC}"
         echo -e "${YELLOW}Falling back to file checksum comparison...${NC}"
         return 2
     fi
