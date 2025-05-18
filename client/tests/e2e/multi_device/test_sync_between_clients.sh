@@ -52,6 +52,24 @@ create_file() {
     fi
 }
 
+# Function to modify a file in a container
+modify_file() {
+    local container=$1
+    local file_path=$2
+    local content=$3
+
+    echo -e "${YELLOW}Modifying file $file_path in $container...${NC}"
+    docker exec $container bash -c "echo '$content' > $file_path"
+
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}File modified successfully.${NC}"
+        return 0
+    else
+        echo -e "${RED}Failed to modify file.${NC}"
+        return 1
+    fi
+}
+
 # Function to check if a file exists in a container
 check_file_exists() {
     local container=$1
@@ -247,6 +265,64 @@ run_test() {
     return 0
 }
 
+# Function to run a modification test
+run_modification_test() {
+    local test_name=$1
+    local source_container=$2
+    local target_container=$3
+    local file_path=$4
+    local new_content=$5
+
+    echo -e "\n${BLUE}=========================================${NC}"
+    echo -e "${CYAN}Running test: $test_name${NC}"
+    echo -e "${BLUE}=========================================${NC}"
+
+    # First check if file exists on both containers
+    check_file_exists $source_container $file_path || return 1
+    check_file_exists $target_container $file_path || return 1
+
+    # Get original content for reference
+    local original_content=$(docker exec $source_container cat $file_path)
+    echo -e "${YELLOW}Original content: $original_content${NC}"
+
+    # Modify file on source container
+    modify_file $source_container $file_path "$new_content" || return 1
+
+    # Check database on source container
+    echo -e "\n${YELLOW}Checking database on source container after modification...${NC}"
+    check_db_for_file $source_container $file_path
+
+    # Trigger sync on both containers
+    trigger_sync $source_container
+    trigger_sync $target_container
+
+    # Wait for sync to complete
+    wait_for_sync $SYNC_WAIT_TIME
+
+    # Check file content on target container
+    check_file_content $target_container $file_path "$new_content" || return 1
+
+    # Check database on target container
+    echo -e "\n${YELLOW}Checking database on target container after modification...${NC}"
+    check_db_for_file $target_container $file_path
+
+    # Compare fingerprints between source and target containers
+    echo -e "\n${YELLOW}Comparing fingerprints between containers after modification...${NC}"
+    compare_fingerprints $source_container $target_container $file_path
+    fingerprint_result=$?
+
+    # If fingerprints don't match, fall back to file checksum comparison
+    if [ $fingerprint_result -eq 2 ]; then
+        echo -e "\n${YELLOW}Falling back to file checksum comparison...${NC}"
+        compare_checksums $source_container $target_container $file_path || return 1
+    elif [ $fingerprint_result -eq 1 ]; then
+        return 1
+    fi
+
+    echo -e "\n${GREEN}Test passed: $test_name${NC}"
+    return 0
+}
+
 # Check if containers are running
 echo -e "${YELLOW}Checking if client containers are running...${NC}"
 if ! is_container_running $CLIENT1_CONTAINER || ! is_container_running $CLIENT2_CONTAINER; then
@@ -269,6 +345,16 @@ TEST2_CONTENT="This is a test file created on client 2 at $(date)."
 run_test "Create file on client 2 and check if it appears on client 1" $CLIENT2_CONTAINER $CLIENT1_CONTAINER $TEST2_FILE "$TEST2_CONTENT"
 TEST2_RESULT=$?
 
+# Test 3: Modify file on client 1 and check if changes appear on client 2
+TEST3_MODIFIED_CONTENT="This file was MODIFIED on client 1 at $(date). The content has been updated."
+run_modification_test "Modify file on client 1 and check if changes appear on client 2" $CLIENT1_CONTAINER $CLIENT2_CONTAINER $TEST1_FILE "$TEST3_MODIFIED_CONTENT"
+TEST3_RESULT=$?
+
+# Test 4: Modify file on client 2 and check if changes appear on client 1
+TEST4_MODIFIED_CONTENT="This file was MODIFIED on client 2 at $(date). The content has been updated."
+run_modification_test "Modify file on client 2 and check if changes appear on client 1" $CLIENT2_CONTAINER $CLIENT1_CONTAINER $TEST2_FILE "$TEST4_MODIFIED_CONTENT"
+TEST4_RESULT=$?
+
 # Print summary
 echo -e "\n${BLUE}=========================================${NC}"
 echo -e "${CYAN}Test Summary${NC}"
@@ -286,8 +372,20 @@ else
     echo -e "${RED}✗ Test 2: Create file on client 2 and check if it appears on client 1${NC}"
 fi
 
-# Exit with success if both tests passed
-if [ $TEST1_RESULT -eq 0 ] && [ $TEST2_RESULT -eq 0 ]; then
+if [ $TEST3_RESULT -eq 0 ]; then
+    echo -e "${GREEN}✓ Test 3: Modify file on client 1 and check if changes appear on client 2${NC}"
+else
+    echo -e "${RED}✗ Test 3: Modify file on client 1 and check if changes appear on client 2${NC}"
+fi
+
+if [ $TEST4_RESULT -eq 0 ]; then
+    echo -e "${GREEN}✓ Test 4: Modify file on client 2 and check if changes appear on client 1${NC}"
+else
+    echo -e "${RED}✗ Test 4: Modify file on client 2 and check if changes appear on client 1${NC}"
+fi
+
+# Exit with success if all tests passed
+if [ $TEST1_RESULT -eq 0 ] && [ $TEST2_RESULT -eq 0 ] && [ $TEST3_RESULT -eq 0 ] && [ $TEST4_RESULT -eq 0 ]; then
     echo -e "\n${GREEN}All tests passed!${NC}"
     exit 0
 else
