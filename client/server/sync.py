@@ -144,22 +144,16 @@ class SyncEngine:
             # Create new file metadata for this path
             file_id = str(uuid.uuid4())
 
-            # Use the file hash as the master file fingerprint
-            master_file_fingerprint = file_hash
-
             file_metadata = FilesMetaData(
                 file_id=file_id,
                 file_type=file_type,
                 file_path=file_path,
                 folder_id=folder_id,
                 file_name=file_name,
-                file_hash=file_hash,
-                master_file_fingerprint=master_file_fingerprint
+                file_hash=file_hash
             )
             self.db.add(file_metadata)
             self.db.commit()
-
-            print(f"Set master_file_fingerprint to {master_file_fingerprint}")
 
             # Process file chunks for new file
             self._process_file_chunks(file_path, file_id)
@@ -906,7 +900,6 @@ class SyncEngine:
             file_name = file_info.get('file_name')
             file_type = file_info.get('file_type')
             folder_id = file_info.get('folder_id')
-            master_file_fingerprint = file_info.get('master_file_fingerprint')
             chunks = file_info.get('chunks', [])
 
             print(f"Processing file: {file_path} with {len(chunks)} updated chunks")
@@ -926,8 +919,7 @@ class SyncEngine:
                     file_type=file_type,
                     file_path=file_path,
                     folder_id=folder_id,
-                    file_name=file_name,
-                    master_file_fingerprint=master_file_fingerprint
+                    file_name=file_name
                 )
                 self.db.add(local_file)
                 self.db.commit()
@@ -936,15 +928,8 @@ class SyncEngine:
                 parent_dir = os.path.dirname(file_path)
                 self.ensure_parent_directories(parent_dir)
             else:
-                # Update existing file metadata with the fingerprint from the server
-                print(f"Updating file metadata for {file_path}")
-                if local_file.master_file_fingerprint != master_file_fingerprint:
-                    print(f"Updating fingerprint from {local_file.master_file_fingerprint} to {master_file_fingerprint}")
-                    local_file.master_file_fingerprint = master_file_fingerprint
-                    self.db.commit()
-                    print(f"Updated fingerprint to {master_file_fingerprint}")
-                else:
-                    print(f"Fingerprint already matches: {master_file_fingerprint}")
+                # File already exists, no need to update metadata
+                print(f"File metadata already exists for {file_path}")
 
             # Process chunks
             for chunk_info in chunks:
