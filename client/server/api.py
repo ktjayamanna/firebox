@@ -2,8 +2,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from db.engine import get_db
 from db.models import FilesMetaData, Chunks, Folders, System
-from typing import List
-from server.schema import FileMetadata, ChunkMetadata, FolderMetadata, SystemInfo
+from typing import List, Dict, Any
+from datetime import datetime, timezone
+from server.schema import FileMetadata, ChunkMetadata, FolderMetadata, SystemInfo, SyncResponse
+from server.client import FileServiceClient
+from server.sync import SyncEngine
 
 router = APIRouter()
 
@@ -90,3 +93,44 @@ def get_system_info(db: Session = Depends(get_db)):
         id=system.id,
         system_last_sync_time=system.system_last_sync_time
     )
+
+@router.post("/sync", response_model=SyncResponse)
+def sync_with_server(db: Session = Depends(get_db)):
+    """
+    Sync with the server to get updates since the last sync time
+
+    This endpoint is called periodically (every 2 minutes) by the client to poll for changes.
+    It:
+    1. Gets the last sync time from the System table
+    2. Calls the server sync endpoint
+    3. Updates the last sync time in the System table
+    4. Returns the sync response to the client
+    """
+    # Get the last sync time from the System table
+    system = db.query(System).filter(System.id == 1).first()
+    if not system:
+        raise HTTPException(status_code=404, detail="System information not found")
+
+    last_sync_time = system.system_last_sync_time
+    if not last_sync_time:
+        # If no last sync time, use a default (e.g., epoch)
+        last_sync_time = "1970-01-01T00:00:00+00:00"
+
+    # Create a client to call the server
+    client = FileServiceClient()
+
+    try:
+        # Call the server sync endpoint
+        response = client.sync(last_sync_time)
+
+        # Process the sync response using the SyncEngine
+        sync_engine = SyncEngine(db)
+        success = sync_engine.process_sync_response(response)
+
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to process sync response")
+
+        return response
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to sync with server: {str(e)}")

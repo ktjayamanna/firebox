@@ -5,12 +5,14 @@ from fastapi import APIRouter, HTTPException
 import uuid
 import logging
 import json
+from datetime import datetime, timezone
 
 from schema import (
     FileMetaRequest, FileMetaResponse,
     ChunkConfirmRequest, ChunkConfirmResponse,
     FolderRequest, FolderResponse,
-    DownloadRequest, DownloadResponse, DownloadUrlResponse
+    DownloadRequest, DownloadResponse, DownloadUrlResponse,
+    SyncRequest, SyncResponse, SyncFileInfo, SyncChunkInfo
 )
 from utils.files import create_file_metadata, format_presigned_url_response, cleanup_file_resources
 from utils.chunks import create_chunk_entries, process_etag_info, process_chunks, calculate_master_file_fingerprint
@@ -250,3 +252,101 @@ async def download_chunks(download_request: DownloadRequest):
         if isinstance(e, HTTPException):
             raise e
         raise HTTPException(status_code=500, detail=f"Failed to generate download URLs: {str(e)}")
+
+@router.post("/sync", response_model=SyncResponse)
+async def sync_client(sync_request: SyncRequest):
+    """
+    Sync endpoint for clients to poll for changes
+
+    This endpoint:
+    1. Takes the client's last sync time
+    2. Queries the Chunks table for chunks created after that time
+    3. Groups chunks by file_id
+    4. Returns file metadata and chunk information for changed files
+    """
+    last_sync_time = sync_request.last_sync_time
+    current_time = datetime.now(timezone.utc).isoformat()
+
+    logger.info(f"Sync request with last_sync_time: {last_sync_time}")
+
+    try:
+        # Import models
+        from models import Chunks, FilesMetaData
+
+        # Parse the last sync time
+        try:
+            last_sync_datetime = datetime.fromisoformat(last_sync_time.replace('Z', '+00:00'))
+        except ValueError:
+            logger.error(f"Invalid last_sync_time format: {last_sync_time}")
+            raise HTTPException(status_code=400, detail="Invalid last_sync_time format. Expected ISO format.")
+
+        # Query for chunks created after the last sync time
+        try:
+            # We need to use a scan operation with a filter since PynamoDB doesn't support
+            # querying on non-key attributes like created_at
+            updated_chunks = []
+            for chunk in Chunks.scan(Chunks.created_at > last_sync_datetime):
+                updated_chunks.append(chunk)
+
+            logger.info(f"Found {len(updated_chunks)} chunks updated since {last_sync_time}")
+
+            if not updated_chunks:
+                # No updates, return empty response
+                return {
+                    "updated_files": [],
+                    "up_to_date": True,
+                    "last_sync_time": current_time
+                }
+
+            # Group chunks by file_id
+            file_chunks = {}
+            for chunk in updated_chunks:
+                if chunk.file_id not in file_chunks:
+                    file_chunks[chunk.file_id] = []
+                file_chunks[chunk.file_id].append(chunk)
+
+            # Get file metadata for each file
+            updated_files = []
+            for file_id, chunks in file_chunks.items():
+                try:
+                    # Get file metadata
+                    file_metadata = FilesMetaData.get(file_id)
+
+                    # Format chunks for response
+                    formatted_chunks = []
+                    for chunk in chunks:
+                        formatted_chunks.append({
+                            "chunk_id": chunk.chunk_id,
+                            "part_number": chunk.part_number,
+                            "fingerprint": chunk.fingerprint,
+                            "created_at": chunk.created_at.isoformat()
+                        })
+
+                    # Add file info to response
+                    updated_files.append({
+                        "file_id": file_id,
+                        "file_path": file_metadata.file_path,
+                        "file_name": file_metadata.file_name,
+                        "file_type": file_metadata.file_type,
+                        "folder_id": file_metadata.folder_id,
+                        "master_file_fingerprint": file_metadata.master_file_fingerprint,
+                        "chunks": formatted_chunks
+                    })
+                except FilesMetaData.DoesNotExist:
+                    logger.warning(f"File metadata not found for file_id: {file_id}")
+                    continue
+
+            # Return the sync response
+            return {
+                "updated_files": updated_files,
+                "up_to_date": False,
+                "last_sync_time": current_time
+            }
+        except Exception as e:
+            logger.error(f"Error querying for updated chunks: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Error querying for updated chunks: {str(e)}")
+    except Exception as e:
+        logger.error(f"Error processing sync request: {str(e)}")
+        if isinstance(e, HTTPException):
+            raise e
+        raise HTTPException(status_code=500, detail=f"Failed to process sync request: {str(e)}")

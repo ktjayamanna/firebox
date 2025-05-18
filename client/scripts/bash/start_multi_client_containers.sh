@@ -48,9 +48,9 @@ wait_for_container() {
     local timeout=$2
     local start_time=$(date +%s)
     local end_time=$((start_time + timeout))
-    
+
     echo -e "${YELLOW}Waiting for $container_name to be ready...${NC}"
-    
+
     while ! is_container_running "$container_name"; do
         local current_time=$(date +%s)
         if [ $current_time -gt $end_time ]; then
@@ -59,7 +59,7 @@ wait_for_container() {
         fi
         sleep 1
     done
-    
+
     echo -e "${GREEN}$container_name is ready.${NC}"
     return 0
 }
@@ -74,6 +74,21 @@ echo -e "\n"
 echo -e "${YELLOW}Generating docker-compose configuration...${NC}"
 $SCRIPT_DIR/generate_multi_client_compose.sh $NUM_CLIENTS
 
+# Step 1.5: Ensure the Docker network exists
+echo -e "${YELLOW}Ensuring Docker network exists...${NC}"
+if ! docker network ls | grep -q "dropbox-network"; then
+    echo -e "${YELLOW}Creating dropbox-network...${NC}"
+    docker network create dropbox-network
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}Network created successfully.${NC}"
+    else
+        echo -e "${RED}Failed to create network. Please check docker logs.${NC}"
+        exit 1
+    fi
+else
+    echo -e "${GREEN}Network dropbox-network already exists.${NC}"
+fi
+
 # Step 2: Check if AWS services are running
 echo -e "${YELLOW}Checking if AWS services are running...${NC}"
 if is_container_running "aws-s3" && is_container_running "aws-dynamodb"; then
@@ -82,18 +97,18 @@ else
     echo -e "${YELLOW}Starting AWS services...${NC}"
     cd $PROJECT_ROOT/deployment/aws
     docker compose up -d
-    
+
     if [ $? -eq 0 ]; then
         echo -e "${GREEN}AWS services started successfully.${NC}"
     else
         echo -e "${RED}Failed to start AWS services. Please check docker logs.${NC}"
         exit 1
     fi
-    
+
     # Wait for AWS services to be ready
     wait_for_container "aws-s3" 60
     wait_for_container "aws-dynamodb" 60
-    
+
     # Wait for initialization
     echo -e "${YELLOW}Waiting for AWS services to initialize (10 seconds)...${NC}"
     sleep 10
@@ -107,23 +122,33 @@ else
     echo -e "${YELLOW}Starting backend services...${NC}"
     cd $PROJECT_ROOT/deployment/backend
     docker compose up -d
-    
+
     if [ $? -eq 0 ]; then
         echo -e "${GREEN}Backend services started successfully.${NC}"
     else
         echo -e "${RED}Failed to start backend services. Please check docker logs.${NC}"
         exit 1
     fi
-    
+
     # Wait for backend services to be ready
     wait_for_container "files-service" 60
-    
+
     # Wait for initialization
     echo -e "${YELLOW}Waiting for backend services to initialize (5 seconds)...${NC}"
     sleep 5
 fi
 
-# Step 4: Start client containers
+# Step 4: Check for existing client containers and stop them if needed
+echo -e "${YELLOW}Checking for existing client containers...${NC}"
+for ((i=1; i<=$NUM_CLIENTS; i++)); do
+    if is_container_running "dropbox-client-$i"; then
+        echo -e "${YELLOW}Container dropbox-client-$i is already running. Stopping it...${NC}"
+        docker stop dropbox-client-$i
+        docker rm dropbox-client-$i
+    fi
+done
+
+# Step 5: Start client containers
 echo -e "${YELLOW}Starting client containers...${NC}"
 cd $PROJECT_ROOT/deployment/client
 docker compose -f docker-compose.multi.yml up -d
@@ -143,7 +168,7 @@ done
 echo -e "\n${GREEN}Multi-client environment is now running!${NC}"
 echo -e "${CYAN}Client API endpoints:${NC}"
 for ((i=1; i<=$NUM_CLIENTS; i++)); do
-    echo -e "  - Client $i: ${GREEN}http://localhost:800$i${NC}"
+    echo -e "  - Client $i: ${GREEN}http://localhost:910$i${NC}"
 done
 
 exit 0

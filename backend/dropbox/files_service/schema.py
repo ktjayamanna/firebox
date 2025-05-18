@@ -173,3 +173,54 @@ class DownloadResponse(BaseModel):
     model_config = {
         "extra": "ignore"
     }
+
+class SyncRequest(BaseModel):
+    """
+    Request model for sync endpoint
+    """
+    last_sync_time: str
+
+    model_config = {
+        "extra": "ignore"
+    }
+
+class SyncChunkInfo(BaseModel):
+    """
+    Model for chunk information in sync responses
+    """
+    chunk_id: str
+    part_number: int
+    fingerprint: str
+    created_at: str
+
+    model_config = {
+        "extra": "ignore"
+    }
+
+class SyncFileInfo(BaseModel):
+    """
+    Model for file information in sync responses
+    """
+    file_id: str
+    file_path: str
+    file_name: str
+    file_type: str
+    folder_id: str
+    master_file_fingerprint: Optional[str] = None
+    chunks: List[SyncChunkInfo]
+
+    model_config = {
+        "extra": "ignore"
+    }
+
+class SyncResponse(BaseModel):
+    """
+    Response model for sync endpoint
+    """
+    updated_files: List[SyncFileInfo]
+    up_to_date: bool
+    last_sync_time: str
+
+    model_config = {
+        "extra": "ignore"
+    }

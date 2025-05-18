@@ -370,7 +370,8 @@ class SyncEngine:
         # Reassemble file from chunks stored in the chunk directory
         print(f"Reassembling file from chunks in {CHUNK_DIR}")
         with open(destination_path, 'wb') as f:
-            for chunk in chunks:
+            # Sort chunks by part_number to ensure correct order
+            for chunk in sorted(chunks, key=lambda x: x.part_number):
                 chunk_path = os.path.join(CHUNK_DIR, f"{chunk.chunk_id}.chunk")
                 print(f"Looking for chunk at: {chunk_path}")
                 if os.path.exists(chunk_path):
@@ -379,6 +380,14 @@ class SyncEngine:
                         f.write(chunk_file.read())
                 else:
                     print(f"Warning: Chunk not found at {chunk_path}")
+                    # Try alternative path format as fallback
+                    alt_chunk_path = os.path.join(CHUNK_DIR, f"{file_id}_{chunk.part_number-1}.chunk")
+                    if os.path.exists(alt_chunk_path):
+                        print(f"Found chunk at alternative path: {alt_chunk_path}")
+                        with open(alt_chunk_path, 'rb') as chunk_file:
+                            f.write(chunk_file.read())
+                    else:
+                        print(f"Warning: Chunk not found at alternative path {alt_chunk_path} either")
 
         return True
 
@@ -838,3 +847,228 @@ class SyncEngine:
 
         # Commit changes to local database
         self.db.commit()
+
+    def process_sync_response(self, sync_response):
+        """
+        Process the sync response from the server
+
+        This method:
+        1. Processes each updated file in the response
+        2. Downloads any missing chunks
+        3. Updates the local database
+        4. Updates the System table with the new last_sync_time
+
+        Args:
+            sync_response: Response from the sync endpoint
+
+        Returns:
+            bool: True if sync was successful, False otherwise
+        """
+        from server.client import FileServiceClient
+        import requests
+
+        if not sync_response:
+            print("Error: Invalid sync response")
+            return False
+
+        # Check if we're already up to date
+        if sync_response.get('up_to_date', False):
+            print("Already up to date with server")
+
+            # Update system_last_sync_time in the System table
+            try:
+                system_record = self.db.query(System).filter(System.id == 1).first()
+                if system_record:
+                    system_record.system_last_sync_time = sync_response.get('last_sync_time')
+                    self.db.commit()
+                    print(f"Updated system_last_sync_time to {sync_response.get('last_sync_time')}")
+                else:
+                    print("Warning: System record not found, cannot update system_last_sync_time")
+            except Exception as e:
+                print(f"Error updating system_last_sync_time: {e}")
+
+            return True
+
+        # Process updated files
+        updated_files = sync_response.get('updated_files', [])
+        print(f"Processing {len(updated_files)} updated files from server")
+
+        for file_info in updated_files:
+            file_id = file_info.get('file_id')
+            file_path = file_info.get('file_path')
+            file_name = file_info.get('file_name')
+            file_type = file_info.get('file_type')
+            folder_id = file_info.get('folder_id')
+            master_file_fingerprint = file_info.get('master_file_fingerprint')
+            chunks = file_info.get('chunks', [])
+
+            print(f"Processing file: {file_path} with {len(chunks)} updated chunks")
+
+            # First try to find the file by path (most reliable)
+            local_file = self.db.query(FilesMetaData).filter(FilesMetaData.file_path == file_path).first()
+
+            # If not found by path, try by file_id as fallback
+            if not local_file:
+                local_file = self.db.query(FilesMetaData).filter(FilesMetaData.file_id == file_id).first()
+
+            if not local_file:
+                # Create new file metadata
+                print(f"Creating new file metadata for {file_path}")
+                local_file = FilesMetaData(
+                    file_id=file_id,
+                    file_type=file_type,
+                    file_path=file_path,
+                    folder_id=folder_id,
+                    file_name=file_name,
+                    master_file_fingerprint=master_file_fingerprint
+                )
+                self.db.add(local_file)
+                self.db.commit()
+
+                # Ensure parent directories exist
+                parent_dir = os.path.dirname(file_path)
+                self.ensure_parent_directories(parent_dir)
+            else:
+                # Update existing file metadata with the fingerprint from the server
+                print(f"Updating file metadata for {file_path}")
+                if local_file.master_file_fingerprint != master_file_fingerprint:
+                    print(f"Updating fingerprint from {local_file.master_file_fingerprint} to {master_file_fingerprint}")
+                    local_file.master_file_fingerprint = master_file_fingerprint
+                    self.db.commit()
+                    print(f"Updated fingerprint to {master_file_fingerprint}")
+                else:
+                    print(f"Fingerprint already matches: {master_file_fingerprint}")
+
+            # Process chunks
+            for chunk_info in chunks:
+                chunk_id = chunk_info.get('chunk_id')
+                part_number = chunk_info.get('part_number')
+                fingerprint = chunk_info.get('fingerprint')
+                created_at = chunk_info.get('created_at')
+
+                # First, try to find the chunk by file_id and part_number (most reliable)
+                local_chunk = self.db.query(Chunks).filter(
+                    Chunks.file_id == file_id,
+                    Chunks.part_number == part_number
+                ).first()
+
+                # If not found by part_number, try by chunk_id as fallback
+                if not local_chunk:
+                    local_chunk = self.db.query(Chunks).filter(
+                        Chunks.chunk_id == chunk_id,
+                        Chunks.file_id == file_id
+                    ).first()
+
+                if local_chunk:
+                    # Check if fingerprint matches (this is the key comparison)
+                    if local_chunk.fingerprint == fingerprint:
+                        print(f"Chunk for file {file_id}, part {part_number} already exists with matching fingerprint")
+                        continue
+                    else:
+                        print(f"Chunk for file {file_id}, part {part_number} exists but fingerprint has changed, downloading new version")
+                        # Delete existing chunk
+                        self.db.delete(local_chunk)
+                        self.db.commit()
+
+                # Download chunk from server
+                print(f"Downloading chunk {chunk_id} for file {file_id}")
+
+                # Create a download request for this chunk
+                api_client = FileServiceClient()
+                download_request = {
+                    "file_id": file_id,
+                    "chunks": [
+                        {
+                            "chunk_id": chunk_id,
+                            "part_number": part_number,
+                            "fingerprint": fingerprint
+                        }
+                    ]
+                }
+
+                try:
+                    # Call the download endpoint
+                    download_response = api_client._make_request("POST", "/files/download", download_request)
+
+                    if not download_response.get('success', False):
+                        print(f"Error downloading chunk {chunk_id}: {download_response.get('error_message')}")
+                        continue
+
+                    # Get the download URL
+                    download_urls = download_response.get('download_urls', [])
+                    if not download_urls:
+                        print(f"No download URLs returned for chunk {chunk_id}")
+                        continue
+
+                    download_url = download_urls[0].get('presigned_url')
+
+                    # Download the chunk
+                    response = requests.get(download_url, timeout=60)
+                    response.raise_for_status()
+
+                    # Save the chunk to the chunk directory
+                    chunk_path = os.path.join(CHUNK_DIR, f"{chunk_id}.chunk")
+                    with open(chunk_path, 'wb') as f:
+                        f.write(response.content)
+
+                    # Create chunk metadata
+                    new_chunk = Chunks(
+                        chunk_id=chunk_id,
+                        file_id=file_id,
+                        part_number=part_number,
+                        created_at=datetime.fromisoformat(created_at.replace('Z', '+00:00')),
+                        last_synced=datetime.now(timezone.utc),
+                        fingerprint=fingerprint
+                    )
+                    self.db.add(new_chunk)
+                    self.db.commit()
+
+                    print(f"Successfully downloaded and saved chunk {chunk_id}")
+
+                except Exception as e:
+                    print(f"Error downloading chunk {chunk_id}: {e}")
+                    continue
+
+            # Check if we need to reconstruct the file
+            local_chunks = self.db.query(Chunks).filter(Chunks.file_id == file_id).all()
+            if local_chunks:
+                # Reconstruct the file
+                print(f"Reconstructing file {file_path}")
+
+                # Ensure the directory exists
+                os.makedirs(os.path.dirname(file_path), exist_ok=True)
+
+                # Reconstruct the file from chunks
+                with open(file_path, 'wb') as f:
+                    # Sort chunks by part_number to ensure correct order
+                    for chunk in sorted(local_chunks, key=lambda x: x.part_number):
+                        chunk_path = os.path.join(CHUNK_DIR, f"{chunk.chunk_id}.chunk")
+                        if os.path.exists(chunk_path):
+                            with open(chunk_path, 'rb') as chunk_file:
+                                f.write(chunk_file.read())
+                        else:
+                            print(f"Warning: Chunk not found at {chunk_path}")
+                            # Try alternative path format as fallback
+                            alt_chunk_path = os.path.join(CHUNK_DIR, f"{file_id}_{chunk.part_number-1}.chunk")
+                            if os.path.exists(alt_chunk_path):
+                                print(f"Found chunk at alternative path: {alt_chunk_path}")
+                                with open(alt_chunk_path, 'rb') as chunk_file:
+                                    f.write(chunk_file.read())
+                            else:
+                                print(f"Warning: Chunk not found at alternative path {alt_chunk_path} either")
+
+                print(f"Successfully reconstructed file {file_path}")
+
+        # Update system_last_sync_time in the System table
+        try:
+            system_record = self.db.query(System).filter(System.id == 1).first()
+            if system_record:
+                system_record.system_last_sync_time = sync_response.get('last_sync_time')
+                self.db.commit()
+                print(f"Updated system_last_sync_time to {sync_response.get('last_sync_time')}")
+            else:
+                print("Warning: System record not found, cannot update system_last_sync_time")
+        except Exception as e:
+            print(f"Error updating system_last_sync_time: {e}")
+
+        return True

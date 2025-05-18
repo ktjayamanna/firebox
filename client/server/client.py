@@ -6,7 +6,8 @@ from config import FILES_SERVICE_URL, REQUEST_TIMEOUT, MAX_RETRIES
 import time
 from server.schema import (
     FileMetaRequest, FileMetaResponse, ChunkETagInfo,
-    ChunkConfirmRequest, ChunkConfirmResponse, FolderRequest, FolderResponse
+    ChunkConfirmRequest, ChunkConfirmResponse, FolderRequest, FolderResponse,
+    SyncRequest, SyncResponse
 )
 
 # Configure logging
@@ -285,4 +286,30 @@ class FileServiceClient:
         response = self._make_request("POST", "/files/confirm", data)
         print(f"Confirmation response: {response}")
         logger.info(f"Confirmation response: {response}")
+        return response
+
+    def sync(self, last_sync_time: str) -> SyncResponse:
+        """
+        Sync with the server to get updates since the last sync time
+
+        This method is called periodically (every 2 minutes) by the client to poll for changes.
+
+        Args:
+            last_sync_time: ISO format timestamp of the last successful sync
+
+        Returns:
+            SyncResponse: Response containing updated files and chunks
+        """
+        # Create a SyncRequest object
+        sync_request = SyncRequest(
+            last_sync_time=last_sync_time
+        )
+
+        # Convert to dict for the API request
+        data = sync_request.model_dump()
+
+        logger.info(f"Syncing with server since {last_sync_time}")
+        response = self._make_request("POST", "/sync", data)
+        logger.info(f"Sync response: {len(response.get('updated_files', []))} updated files")
+
         return response
