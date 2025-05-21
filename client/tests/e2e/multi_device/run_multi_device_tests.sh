@@ -18,7 +18,7 @@ NC='\033[0m' # No Color
 # Define constants
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../../" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../../../" && pwd)"  # Go up to the project root
 LOG_DIR="${SCRIPT_DIR}/../../logs"  # Go up two levels to reach client/tests/logs
 LOG_FILE="${LOG_DIR}/multi_device_test_run_${TIMESTAMP}.log"
 TEST_DIR="${SCRIPT_DIR}"
@@ -26,6 +26,11 @@ PASSED_TESTS=0
 FAILED_TESTS=0
 TOTAL_TESTS=0
 NUM_CLIENTS=2  # Default number of clients to test
+
+# Debug info
+echo "Script directory: $SCRIPT_DIR"
+echo "Project root: $PROJECT_ROOT"
+echo "Multi-client script path: ${PROJECT_ROOT}/client/scripts/bash/start_multi_client_containers.sh"
 
 # Create log directory if it doesn't exist
 mkdir -p $LOG_DIR
@@ -44,6 +49,10 @@ run_test() {
     echo -e "\n${BLUE}----------------------------------------${NC}"
     echo -e "${YELLOW}Running Test: ${test_name}${NC}"
     echo -e "${BLUE}----------------------------------------${NC}"
+
+    # Wait a bit before running the test to ensure database is ready
+    echo -e "${YELLOW}Waiting 5 seconds before test to ensure database is ready...${NC}"
+    sleep 5
 
     # Run the test script
     $test_script
@@ -84,8 +93,9 @@ if [ "$CLIENT1_RUNNING" = "false" ] || [ "$CLIENT2_RUNNING" = "false" ]; then
     ${PROJECT_ROOT}/client/scripts/bash/start_multi_client_containers.sh $NUM_CLIENTS
 
     # Wait for containers to initialize
-    echo -e "${YELLOW}Waiting for containers to initialize (10 seconds)...${NC}"
-    sleep 10
+    echo -e "${YELLOW}Waiting for containers to initialize (30 seconds)...${NC}"
+    echo -e "${YELLOW}This longer wait is needed to ensure databases are properly initialized after cleanup...${NC}"
+    sleep 30
 
     # Check again if containers are running
     CLIENT1_RUNNING=$(docker ps | grep -q "firebox-client-1" && echo "true" || echo "false")

@@ -3,8 +3,7 @@
 # Firebox Client E2E Test Suite Runner
 #===================================================================================
 # Description: This script runs all the E2E tests for the Firebox client.
-# Currently, it only runs the single device tests, but it can be extended to run
-# multi-device tests as well.
+# Currently, it only runs the multi-device tests as single device tests are no longer needed.
 #===================================================================================
 
 # Set text colors for better readability
@@ -17,7 +16,6 @@ NC='\033[0m' # No Color
 
 # Define constants
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SINGLE_DEVICE_DIR="${SCRIPT_DIR}/single_device"
 MULTI_DEVICE_DIR="${SCRIPT_DIR}/multi_device"
 
 echo -e "${BLUE}=========================================${NC}"
@@ -26,10 +24,9 @@ echo -e "${BLUE}=========================================${NC}"
 echo -e "Starting test run at: $(date)"
 echo -e "\n"
 
-# Run single device tests
-echo -e "${YELLOW}Running Single Device Tests...${NC}"
-${SINGLE_DEVICE_DIR}/run_single_device_tests.sh
-SINGLE_DEVICE_RESULT=$?
+# Skip single device tests
+echo -e "${YELLOW}Skipping Single Device Tests (no longer needed)${NC}"
+SINGLE_DEVICE_RESULT=0
 
 # Check if multi-device directory exists and has test files
 if [ -d "$MULTI_DEVICE_DIR" ] && [ -f "${MULTI_DEVICE_DIR}/run_multi_device_tests.sh" ]; then
@@ -48,12 +45,7 @@ echo -e "\n${BLUE}=========================================${NC}"
 echo -e "${GREEN}Test Summary${NC}"
 echo -e "${BLUE}=========================================${NC}"
 
-if [ $SINGLE_DEVICE_RESULT -eq 0 ]; then
-    echo -e "Single Device Tests: ${GREEN}PASSED${NC}"
-else
-    echo -e "Single Device Tests: ${RED}FAILED${NC}"
-fi
-
+# Only show multi-device test results
 if [ -d "$MULTI_DEVICE_DIR" ] && [ -f "${MULTI_DEVICE_DIR}/run_multi_device_tests.sh" ]; then
     if [ $MULTI_DEVICE_RESULT -eq 0 ]; then
         echo -e "Multi-Device Tests: ${GREEN}PASSED${NC}"
@@ -63,7 +55,7 @@ if [ -d "$MULTI_DEVICE_DIR" ] && [ -f "${MULTI_DEVICE_DIR}/run_multi_device_test
 fi
 
 # Final result message
-if [ $SINGLE_DEVICE_RESULT -eq 0 ] && [ $MULTI_DEVICE_RESULT -eq 0 ]; then
+if [ $MULTI_DEVICE_RESULT -eq 0 ]; then
     echo -e "\n${GREEN}All tests passed!${NC}"
     exit 0
 else

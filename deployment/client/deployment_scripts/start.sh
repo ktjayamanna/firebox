@@ -96,6 +96,10 @@ echo "Initial migration generated in ${ALEMBIC_VERSIONS}."
 echo "Creating database tables directly using SQLAlchemy..."
 cd "$APP_DIR" && python -c "from db.models import Base; from db.engine import engine; Base.metadata.create_all(bind=engine)"
 
+# Wait a moment to ensure database is properly initialized
+echo "Waiting for database to be ready..."
+sleep 5
+
 echo "Database setup complete."
 echo "Starting FastAPI application..."
 cd "$APP_DIR" && exec uvicorn server.main:app --host 0.0.0.0 --port 8000
