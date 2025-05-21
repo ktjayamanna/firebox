@@ -25,7 +25,7 @@ NC='\033[0m' # No Color
 
 # Default settings
 DO_CLEANUP=true
-CONTAINER_NAME="firebox-client"
+CONTAINER_NAME="firebox-client-1"
 SYNC_DIR="/app/my_firebox"
 TEST_DIR="client/tests/smoke"
 

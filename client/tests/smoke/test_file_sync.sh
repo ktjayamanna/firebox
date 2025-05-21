@@ -25,7 +25,7 @@ CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 # Define constants
-CONTAINER_NAME="firebox-client"
+CONTAINER_NAME="firebox-client-1"
 MOCK_DATA_DIR="client/tests/mock_data"
 CONTAINER_SYNC_DIR="${SYNC_DIR:-/app/my_firebox}"
 DB_PATH="${DB_FILE_PATH:-/app/data/firebox.db}"

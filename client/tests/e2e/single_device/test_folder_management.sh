@@ -23,7 +23,7 @@ CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 # Define constants
-CONTAINER_NAME="firebox-client"
+CONTAINER_NAME="firebox-client-1"
 CONTAINER_SYNC_DIR="${SYNC_DIR:-/app/my_firebox}"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 DB_PATH="${DB_FILE_PATH:-/app/data/firebox.db}"

@@ -13,8 +13,8 @@ echo -e "${GREEN}Firebox API Endpoints Smoke Test${NC}"
 echo -e "${BLUE}=========================================${NC}"
 
 # Check if container is running
-if ! docker ps | grep -q firebox-client; then
-    echo -e "${RED}Error: firebox-client container is not running${NC}"
+if ! docker ps | grep -q firebox-client-1; then
+    echo -e "${RED}Error: firebox-client-1 container is not running${NC}"
     echo -e "Please start the container first with: ./client/scripts/bash/start_client_container.sh"
     exit 1
 fi
@@ -57,7 +57,7 @@ fi
 # Step 4: Create a test file for API testing
 echo -e "\n${YELLOW}Step 4: Creating a test file for API testing...${NC}"
 TEST_FILE="/app/my_firebox/api_test_file.txt"
-docker exec firebox-client bash -c "echo 'This is a test file for API testing' > $TEST_FILE"
+docker exec firebox-client-1 bash -c "echo 'This is a test file for API testing' > $TEST_FILE"
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}Successfully created test file${NC}"
 else
@@ -84,7 +84,7 @@ fi
 # Step 7: Test file details endpoint
 echo -e "\n${YELLOW}Step 7: Testing file details endpoint...${NC}"
 # Get the file_id of the test file
-FILE_ID=$(docker exec firebox-client sqlite3 /app/data/firebox.db "SELECT file_id FROM files_metadata WHERE file_name='api_test_file.txt';")
+FILE_ID=$(docker exec firebox-client-1 sqlite3 /app/data/firebox.db "SELECT file_id FROM files_metadata WHERE file_name='api_test_file.txt';")
 if [ -z "$FILE_ID" ]; then
     echo -e "${RED}Could not find file_id for test file${NC}"
 else
@@ -103,12 +103,12 @@ echo -e "\n${YELLOW}Step 8: Checking if chunks exist in the database...${NC}"
 if [ -z "$FILE_ID" ]; then
     echo -e "${RED}Skipping chunks check as file_id is not available${NC}"
 else
-    CHUNK_COUNT=$(docker exec firebox-client sqlite3 /app/data/firebox.db "SELECT COUNT(*) FROM chunks WHERE file_id='$FILE_ID';")
+    CHUNK_COUNT=$(docker exec firebox-client-1 sqlite3 /app/data/firebox.db "SELECT COUNT(*) FROM chunks WHERE file_id='$FILE_ID';")
     if [ "$CHUNK_COUNT" -gt 0 ]; then
         echo -e "${GREEN}Found $CHUNK_COUNT chunks for file $FILE_ID in the database${NC}"
         # Display chunk details
         echo -e "Chunk details:"
-        docker exec firebox-client sqlite3 /app/data/firebox.db "SELECT chunk_id, created_at FROM chunks WHERE file_id='$FILE_ID';"
+        docker exec firebox-client-1 sqlite3 /app/data/firebox.db "SELECT chunk_id, created_at FROM chunks WHERE file_id='$FILE_ID';"
     else
         echo -e "${YELLOW}No chunks found for file $FILE_ID in the database${NC}"
     fi

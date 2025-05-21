@@ -6,6 +6,8 @@
 __pycache__
 data
 garage
+# prompts folder
+prompts/
 # test logs
 client/tests/logs/*.log
 client/tests/e2e/logs/*.log
