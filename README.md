@@ -1,6 +1,6 @@
 # Firebox: Secure Storage for Firebay Studios Clients
 
-This repository contains the source code and design documents for Firebox, a secure storage solution built for Firebay Studios' clients. Accomedting ~5,000 daily active users, Firebox provides a safe place for clients to keep their unreleased advertising assets private, without relying on public cloud storage solutions that may compromise intellectual property.
+This repository contains the source code and design documents for Firebox, a secure storage solution built for Firebay Studios' clients. Accommodating ~5,000 daily active users, Firebox provides a safe place for clients to keep their unreleased advertising assets private, without relying on public cloud storage solutions that may compromise intellectual property.
 
 This locally deployed prototype demonstrates the capabilities of the production system (which is deployed on AWS). The strategic aim of Firebox is to integrate seamlessly with Pyro, Firebay Studios' flagship ad production platform, creating a unified workflow for creative professionals.
 
