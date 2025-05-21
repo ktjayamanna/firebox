@@ -1,6 +1,6 @@
-# Dropbox Backend Services
+# Firebox Backend Services
 
-This directory contains the backend microservices for the Dropbox system.
+This directory contains the backend microservices for the Firebox system.
 
 ## Services
 
@@ -12,7 +12,7 @@ This directory contains the backend microservices for the Dropbox system.
 ## Directory Structure
 
 ```
-backend/dropbox/
+backend/firebox/
 ├── files_service/       # Files microservice
 │   ├── config.py        # Configuration settings
 │   ├── main.py          # FastAPI application

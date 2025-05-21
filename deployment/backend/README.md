@@ -1,6 +1,6 @@
-# Dropbox Backend Services
+# Firebox Backend Services
 
-This directory contains Docker configurations for the backend microservices of the Dropbox system.
+This directory contains Docker configurations for the backend microservices of the Firebox system.
 
 ## Services Included
 

@@ -2,7 +2,7 @@
 #===================================================================================
 # Generate Multi-Client Docker Compose Configuration
 #===================================================================================
-# Description: This script generates a docker-compose.yml file for multiple Dropbox
+# Description: This script generates a docker-compose.yml file for multiple Firebox
 # client containers. It takes the number of clients as an argument and creates a
 # configuration with that many client containers, each with its own volumes.
 #
@@ -49,11 +49,11 @@ EOF
 # Generate client services
 for ((i=1; i<=$NUM_CLIENTS; i++)); do
     cat >> "$OUTPUT_FILE" << EOF
-  dropbox-client-$i:
+  firebox-client-$i:
     build:
       context: ../../
       dockerfile: deployment/client/Dockerfile
-    container_name: dropbox-client-$i
+    container_name: firebox-client-$i
     ports:
       - "910$i:8000"
     volumes:
@@ -62,16 +62,16 @@ for ((i=1; i<=$NUM_CLIENTS; i++)); do
       - ../../client/scripts:/app/scripts
       - ../../client/requirements.txt:/app/requirements.txt
       - ../../client/config.py:/app/config.py
-      - dropbox-data-$i:/app/my_dropbox
+      - firebox-data-$i:/app/my_firebox
       - db-data-$i:/app/data
       - chunk-data-$i:/app/tmp/chunk
     environment:
       - PYTHONPATH=/app
       - APP_DIR=/app
-      - SYNC_DIR=/app/my_dropbox
+      - SYNC_DIR=/app/my_firebox
       - CHUNK_DIR=/app/tmp/chunk
-      - DATABASE_URL=sqlite:///./data/dropbox.db
-      - DB_FILE_PATH=/app/data/dropbox.db
+      - DATABASE_URL=sqlite:///./data/firebox.db
+      - DB_FILE_PATH=/app/data/firebox.db
       - DB_POOL_SIZE=20
       - DB_MAX_OVERFLOW=10
       - DB_POOL_TIMEOUT=30
@@ -85,7 +85,7 @@ for ((i=1; i<=$NUM_CLIENTS; i++)); do
       - REQUEST_TIMEOUT=30
       - MAX_RETRIES=3
     networks:
-      - dropbox-network
+      - firebox-network
     restart: unless-stopped
 
 EOF
@@ -98,7 +98,7 @@ EOF
 
 for ((i=1; i<=$NUM_CLIENTS; i++)); do
     cat >> "$OUTPUT_FILE" << EOF
-  dropbox-data-$i:
+  firebox-data-$i:
     driver: local
   db-data-$i:
     driver: local
@@ -111,7 +111,7 @@ done
 cat >> "$OUTPUT_FILE" << EOF
 
 networks:
-  dropbox-network:
+  firebox-network:
     external: true
 EOF
 

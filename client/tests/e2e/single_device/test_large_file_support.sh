@@ -1,6 +1,6 @@
 #!/bin/bash
 #===================================================================================
-# Dropbox Client Test Large File Support
+# Firebox Client Test Large File Support
 #===================================================================================
 # Description: This script tests the large file support functionality:
 # - Handling files of arbitrary size
@@ -24,11 +24,11 @@ CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 # Define constants
-CONTAINER_NAME="dropbox-client"
-CONTAINER_SYNC_DIR="${SYNC_DIR:-/app/my_dropbox}"
+CONTAINER_NAME="firebox-client"
+CONTAINER_SYNC_DIR="${SYNC_DIR:-/app/my_firebox}"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-DB_PATH="${DB_FILE_PATH:-/app/data/dropbox.db}"
-TEMP_DIR="/tmp/dropbox_test_${TIMESTAMP}"
+DB_PATH="${DB_FILE_PATH:-/app/data/firebox.db}"
+TEMP_DIR="/tmp/firebox_test_${TIMESTAMP}"
 FILE_SIZE_MB=20  # Create a 20MB file to ensure multiple chunks
 WAIT_TIME=10  # seconds to wait for file processing (longer for large files)
 FILES_SERVICE_URL="http://localhost:8001"
@@ -39,7 +39,7 @@ mkdir -p $TEMP_DIR
 mkdir -p $DOWNLOAD_DIR
 
 echo -e "${BLUE}=========================================${NC}"
-echo -e "${GREEN}Dropbox Large File Support Test${NC}"
+echo -e "${GREEN}Firebox Large File Support Test${NC}"
 echo -e "${BLUE}=========================================${NC}"
 
 # Check if container is running
@@ -220,8 +220,8 @@ else
             PRESIGNED_URL=$(echo "$DOWNLOAD_URLS" | jq -r ".[$i].presigned_url")
             
             # Extract bucket and key from the URL
-            BUCKET="dropbox-chunks"
-            KEY=$(echo "$PRESIGNED_URL" | grep -o '/dropbox-chunks/[^?]*' | sed 's/\/dropbox-chunks\///')
+            BUCKET="firebox-chunks"
+            KEY=$(echo "$PRESIGNED_URL" | grep -o '/firebox-chunks/[^?]*' | sed 's/\/firebox-chunks\///')
             
             DOWNLOAD_PATH="$DOWNLOAD_DIR/${CHUNK_ID}_part${PART_NUMBER}.bin"
             

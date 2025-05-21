@@ -1,12 +1,12 @@
-# Dropbox Client Test Suite
+# Firebox Client Test Suite
 
-This directory contains tests for the Dropbox client application. The tests are organized into different categories to verify various aspects of the system's functionality.
+This directory contains tests for the Firebox client application. The tests are organized into different categories to verify various aspects of the system's functionality.
 
 ## Test Categories
 
 ### Smoke Tests
 
-Located in the `smoke` directory, these tests verify the basic functionality of the Dropbox client. They ensure that the core features are working as expected.
+Located in the `smoke` directory, these tests verify the basic functionality of the Firebox client. They ensure that the core features are working as expected.
 
 #### Available Smoke Tests
 
@@ -35,7 +35,7 @@ Located in the `smoke` directory, these tests verify the basic functionality of 
 ### Prerequisites
 
 - Docker must be installed and running
-- The Dropbox client container must be built (it will be started automatically by the test scripts if not running)
+- The Firebox client container must be built (it will be started automatically by the test scripts if not running)
 
 ### Running All Tests
 
@@ -82,22 +82,22 @@ If tests are failing, check the following:
 
 1. **Docker Container Status**
    ```bash
-   docker ps | grep dropbox-client
+   docker ps | grep firebox-client
    ```
 
 2. **Container Logs**
    ```bash
-   docker logs dropbox-client
+   docker logs firebox-client
    ```
 
 3. **Database Content**
    ```bash
-   docker exec dropbox-client sqlite3 /app/data/dropbox.db "SELECT * FROM folders;"
-   docker exec dropbox-client sqlite3 /app/data/dropbox.db "SELECT * FROM files_metadata;"
-   docker exec dropbox-client sqlite3 /app/data/dropbox.db "SELECT * FROM chunks;"
+   docker exec firebox-client sqlite3 /app/data/firebox.db "SELECT * FROM folders;"
+   docker exec firebox-client sqlite3 /app/data/firebox.db "SELECT * FROM files_metadata;"
+   docker exec firebox-client sqlite3 /app/data/firebox.db "SELECT * FROM chunks;"
    ```
 
 4. **Sync Directory Content**
    ```bash
-   docker exec dropbox-client ls -la /app/my_dropbox
+   docker exec firebox-client ls -la /app/my_firebox
    ```

@@ -8,7 +8,7 @@ YELLOW='\033[0;33m'
 NC='\033[0m' # No Color
 
 echo -e "${BLUE}=========================================${NC}"
-echo -e "${GREEN}Starting Dropbox Backend Services${NC}"
+echo -e "${GREEN}Starting Firebox Backend Services${NC}"
 echo -e "${BLUE}=========================================${NC}"
 
 # Check if AWS services are running
@@ -19,15 +19,15 @@ if ! docker ps | grep -q aws-api-gateway; then
 fi
 
 # Create network if it doesn't exist
-if ! docker network ls | grep -q dropbox-network; then
-    echo -e "${YELLOW}Creating dropbox-network...${NC}"
-    docker network create dropbox-network
+if ! docker network ls | grep -q firebox-network; then
+    echo -e "${YELLOW}Creating firebox-network...${NC}"
+    docker network create firebox-network
     
     # Connect AWS services to the network
-    echo -e "${YELLOW}Connecting AWS services to dropbox-network...${NC}"
-    docker network connect dropbox-network aws-api-gateway
-    docker network connect dropbox-network aws-s3
-    docker network connect dropbox-network aws-dynamodb
+    echo -e "${YELLOW}Connecting AWS services to firebox-network...${NC}"
+    docker network connect firebox-network aws-api-gateway
+    docker network connect firebox-network aws-s3
+    docker network connect firebox-network aws-dynamodb
 fi
 
 # Navigate to the backend directory

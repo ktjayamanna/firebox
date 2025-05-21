@@ -26,8 +26,8 @@ async def lifespan(app):
     print("Stopped background services")
 
 app = FastAPI(
-    title="Dropbox Client API",
-    description="API for Dropbox client synchronization",
+    title="Firebox Client API",
+    description="API for Firebox client synchronization",
     lifespan=lifespan
 )
 
@@ -68,7 +68,7 @@ except Exception as e:
 
 @app.get("/")
 def read_root():
-    return {"message": "Welcome to Dropbox Client API"}
+    return {"message": "Welcome to Firebox Client API"}
 
 @app.get("/health")
 def health_check():

@@ -1,6 +1,6 @@
 #!/bin/bash
 #===================================================================================
-# Dropbox Client Test Folder Management
+# Firebox Client Test Folder Management
 #===================================================================================
 # Description: This script tests the folder management functionality:
 # - Support for nested directory structures
@@ -23,14 +23,14 @@ CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 # Define constants
-CONTAINER_NAME="dropbox-client"
-CONTAINER_SYNC_DIR="${SYNC_DIR:-/app/my_dropbox}"
+CONTAINER_NAME="firebox-client"
+CONTAINER_SYNC_DIR="${SYNC_DIR:-/app/my_firebox}"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-DB_PATH="${DB_FILE_PATH:-/app/data/dropbox.db}"
+DB_PATH="${DB_FILE_PATH:-/app/data/firebox.db}"
 WAIT_TIME=3  # seconds to wait for file processing
 
 echo -e "${BLUE}=========================================${NC}"
-echo -e "${GREEN}Dropbox Folder Management Test${NC}"
+echo -e "${GREEN}Firebox Folder Management Test${NC}"
 echo -e "${BLUE}=========================================${NC}"
 
 # Check if container is running

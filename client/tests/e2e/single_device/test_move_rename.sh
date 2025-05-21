@@ -1,6 +1,6 @@
 #!/bin/bash
 #===================================================================================
-# Dropbox Client Test Move and Rename Operations
+# Firebox Client Test Move and Rename Operations
 #===================================================================================
 # Description: This script tests the move and rename functionality:
 # - Support for moving files between directories
@@ -24,14 +24,14 @@ CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 # Define constants
-CONTAINER_NAME="dropbox-client"
-CONTAINER_SYNC_DIR="${SYNC_DIR:-/app/my_dropbox}"
+CONTAINER_NAME="firebox-client"
+CONTAINER_SYNC_DIR="${SYNC_DIR:-/app/my_firebox}"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-DB_PATH="${DB_FILE_PATH:-/app/data/dropbox.db}"
+DB_PATH="${DB_FILE_PATH:-/app/data/firebox.db}"
 WAIT_TIME=3  # seconds to wait for file processing
 
 echo -e "${BLUE}=========================================${NC}"
-echo -e "${GREEN}Dropbox Move and Rename Operations Test${NC}"
+echo -e "${GREEN}Firebox Move and Rename Operations Test${NC}"
 echo -e "${BLUE}=========================================${NC}"
 
 # Check if container is running

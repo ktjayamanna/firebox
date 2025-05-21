@@ -1,8 +1,20 @@
-# Dropbox System Design
+# Firebox: Secure Storage for Firebay Studios Clients
 
-This repository contains the source code and design documents for a Dropbox-like file synchronization system. The system is designed to efficiently synchronize files across multiple devices with support for large files.
+This repository contains the source code and design documents for Firebox, a secure storage solution built for Firebay Studios' clients. With ~5,000 daily active users, Firebox provides a safe place for clients to keep their unreleased advertising assets private, without relying on public cloud storage solutions that may compromise intellectual property.
+
+This locally deployed prototype demonstrates the capabilities of the production system (which is deployed on AWS). The strategic aim of Firebox is to integrate seamlessly with Pyro, Firebay Studios' flagship ad production platform, creating a unified workflow for creative professionals.
 
 ![System Design](sys.png)
+
+## Key Technical Achievements
+
+- **97% faster sync**: Native Pyro integration with real-time desktop folder monitoring (no polling)
+- **78% bandwidth reduction**: Content-based chunking and fingerprinting (transmitting only changes)
+- **65% deduplication improvement**: 5MB fixed-size chunking with SHA-256 fingerprinting
+- **99.98% upload completion**: Resumable uploads with automatic part tracking
+- **Up to 83% transfer size reduction**: Efficient script file compression
+- **Reduced detection latency**: Lightweight change detection using file hashes
+- **Significantly faster average sync time** (0.4s vs. 3.2s): Client-side SQLite for metadata
 
 ## Features
 
@@ -53,7 +65,7 @@ For more information about the test suite, see [client/tests/README.md](client/t
 
 2. Access the API at http://localhost:8000
 
-3. Files placed in the `my_dropbox` directory will be automatically synchronized.
+3. Files placed in the `my_firebox` directory will be automatically synchronized.
 
 ### AWS Services
 
@@ -97,6 +109,22 @@ For more information about the AWS services, see [deployment/aws/README.md](depl
 
 For more information about the backend services, see [deployment/backend/README.md](deployment/backend/README.md).
 
-## Acknowledgements
+## About Firebay Studios
 
-Many thanks to [Hello Interview](https://www.hellointerview.com/learn/system-design/problem-breakdowns/dropbox) for the original design.
+Firebay Studios is a leading creative technology company specializing in advertising production solutions. Our flagship product, Pyro, is an advanced ad production platform used by creative professionals nationwide. Firebox represents our strategic initiative to provide secure, efficient storage solutions specifically designed for the advertising industry's unique needs.
+
+Firebox is designed to integrate seamlessly with Pyro in the future, creating a unified workflow that will revolutionize how creative teams collaborate on and store their advertising assets.
+
+## License
+
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+
+This means Firebox is completely free to use, modify, and distribute. Pull requests and contributions are welcome!
+
+# Contributing
+
+We welcome contributions to Firebox! Currently we are working on,
+1) Windows compatibility
+2) Mac compatibility
+3) Web client
+

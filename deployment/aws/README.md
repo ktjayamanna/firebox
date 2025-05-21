@@ -71,7 +71,7 @@ docker compose down -v
 
 ### MinIO (S3)
 
-- The setup automatically creates a bucket named `dropbox-chunks` with public access policy.
+- The setup automatically creates a bucket named `firebox-chunks` with public access policy.
 - You can modify the bucket configuration in the `minio-setup` service in the docker-compose.yml file.
 
 ### DynamoDB

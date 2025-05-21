@@ -1,8 +1,8 @@
 #!/bin/bash
 #===================================================================================
-# Dropbox System - Start All Containers
+# Firebox System - Start All Containers
 #===================================================================================
-# Description: This script starts all containers required for the Dropbox system
+# Description: This script starts all containers required for the Firebox system
 # in the correct order, ensuring dependencies are met before proceeding.
 #
 # The script will:
@@ -30,7 +30,7 @@ NC='\033[0m' # No Color
 
 # Default settings
 DO_CLEAN=false
-NETWORK_NAME="dropbox-network"
+NETWORK_NAME="firebox-network"
 PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || echo "$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)")
 
 # Process command line arguments
@@ -41,7 +41,7 @@ for arg in "$@"; do
       shift
       ;;
     --help)
-      echo -e "${CYAN}Dropbox System - Start All Containers${NC}"
+      echo -e "${CYAN}Firebox System - Start All Containers${NC}"
       echo -e "Usage: ./client/scripts/bash/run_all_containers.sh [options]"
       echo -e "  Options:"
       echo -e "    --clean       Remove all containers and volumes before starting"
@@ -109,7 +109,7 @@ wait_for_container() {
 #===================================================================================
 
 echo -e "${BLUE}=========================================${NC}"
-echo -e "${GREEN}Dropbox System - Start All Containers${NC}"
+echo -e "${GREEN}Firebox System - Start All Containers${NC}"
 echo -e "${BLUE}=========================================${NC}"
 echo -e "${CYAN}Project root: $PROJECT_ROOT${NC}"
 
@@ -196,7 +196,7 @@ fi
 
 # Step 4: Start client container
 display_step 4 "Starting client container"
-if is_container_running "dropbox-client"; then
+if is_container_running "firebox-client"; then
     echo -e "${GREEN}✓ Client container is already running${NC}"
 else
     echo -e "${YELLOW}Starting client container...${NC}"
@@ -211,7 +211,7 @@ else
     fi
     
     # Wait for client container to be ready
-    wait_for_container "dropbox-client" 60
+    wait_for_container "firebox-client" 60
 fi
 
 # Step 5: Verify all services are running
@@ -219,7 +219,7 @@ display_step 5 "Verifying all services"
 echo -e "${YELLOW}Checking all containers...${NC}"
 
 all_running=true
-for container in "aws-s3" "aws-dynamodb" "files-service" "dropbox-client"; do
+for container in "aws-s3" "aws-dynamodb" "files-service" "firebox-client"; do
     if is_container_running $container; then
         echo -e "${GREEN}✓ $container is running${NC}"
     else

@@ -1,9 +1,9 @@
 #!/bin/bash
 #===================================================================================
-# Dropbox Client File Synchronization Smoke Test
+# Firebox Client File Synchronization Smoke Test
 #===================================================================================
 # Description: This script tests the basic file synchronization functionality of the
-# Dropbox client. It verifies that files are properly uploaded, tracked in the
+# Firebox client. It verifies that files are properly uploaded, tracked in the
 # database, and that folder structures are maintained.
 #
 # Test Coverage:
@@ -25,10 +25,10 @@ CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 # Define constants
-CONTAINER_NAME="dropbox-client"
+CONTAINER_NAME="firebox-client"
 MOCK_DATA_DIR="client/tests/mock_data"
-CONTAINER_SYNC_DIR="${SYNC_DIR:-/app/my_dropbox}"
-DB_PATH="${DB_FILE_PATH:-/app/data/dropbox.db}"
+CONTAINER_SYNC_DIR="${SYNC_DIR:-/app/my_firebox}"
+DB_PATH="${DB_FILE_PATH:-/app/data/firebox.db}"
 WAIT_TIME=5  # seconds to wait for file processing
 
 #===================================================================================
@@ -83,7 +83,7 @@ display_step() {
 #===================================================================================
 
 echo -e "${BLUE}=========================================${NC}"
-echo -e "${GREEN}Dropbox File Sync Smoke Test${NC}"
+echo -e "${GREEN}Firebox File Sync Smoke Test${NC}"
 echo -e "${BLUE}=========================================${NC}"
 
 # Check if container is running

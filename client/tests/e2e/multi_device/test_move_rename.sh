@@ -1,6 +1,6 @@
 #!/bin/bash
 #===================================================================================
-# Dropbox Client Multi-Device Test Move and Rename Operations
+# Firebox Client Multi-Device Test Move and Rename Operations
 #===================================================================================
 # Description: This script tests the move and rename functionality across multiple
 # client devices:
@@ -25,15 +25,15 @@ CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 # Define constants
-CLIENT1_NAME="dropbox-client-1"
-CLIENT2_NAME="dropbox-client-2"
-CONTAINER_SYNC_DIR="${SYNC_DIR:-/app/my_dropbox}"
+CLIENT1_NAME="firebox-client-1"
+CLIENT2_NAME="firebox-client-2"
+CONTAINER_SYNC_DIR="${SYNC_DIR:-/app/my_firebox}"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-DB_PATH="${DB_FILE_PATH:-/app/data/dropbox.db}"
+DB_PATH="${DB_FILE_PATH:-/app/data/firebox.db}"
 WAIT_TIME=3  # seconds to wait for file processing
 
 echo -e "${BLUE}=========================================${NC}"
-echo -e "${GREEN}Dropbox Multi-Device Move and Rename Operations Test${NC}"
+echo -e "${GREEN}Firebox Multi-Device Move and Rename Operations Test${NC}"
 echo -e "${BLUE}=========================================${NC}"
 
 # Check if containers are running

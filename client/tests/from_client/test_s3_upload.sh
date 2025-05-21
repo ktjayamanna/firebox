@@ -1,6 +1,6 @@
 #!/bin/bash
 #===================================================================================
-# Dropbox Client S3 Upload Smoke Test
+# Firebox Client S3 Upload Smoke Test
 #===================================================================================
 # Description: This script tests the ability to upload files directly to the S3 
 # (MinIO) bucket from the client container. It verifies that the client can properly
@@ -26,10 +26,10 @@ CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 # Define constants
-S3_BUCKET_NAME="dropbox-chunks"
+S3_BUCKET_NAME="firebox-chunks"
 S3_ENDPOINT="http://aws-s3:9000"
 TEST_FILE_NAME="s3_test_file.txt"
-TEST_FILE_CONTENT="This is a test file for S3 upload from the Dropbox client."
+TEST_FILE_CONTENT="This is a test file for S3 upload from the Firebox client."
 TEST_FILE_PATH="/tmp/${TEST_FILE_NAME}"
 
 #===================================================================================
@@ -48,7 +48,7 @@ display_step() {
 #===================================================================================
 
 echo -e "${BLUE}=========================================${NC}"
-echo -e "${GREEN}Dropbox S3 Upload Smoke Test${NC}"
+echo -e "${GREEN}Firebox S3 Upload Smoke Test${NC}"
 echo -e "${BLUE}=========================================${NC}"
 
 #-------------------

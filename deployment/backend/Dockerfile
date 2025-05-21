@@ -9,13 +9,13 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 
 # Copy requirements file
-COPY backend/dropbox/files_service/requirements.txt /app/requirements.txt
+COPY backend/firebox/files_service/requirements.txt /app/requirements.txt
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r /app/requirements.txt
 
 # Copy application code
-COPY backend/dropbox/files_service/ /app/
+COPY backend/firebox/files_service/ /app/
 
 # Expose the FastAPI port
 EXPOSE 8001

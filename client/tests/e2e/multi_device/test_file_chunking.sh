@@ -1,6 +1,6 @@
 #!/bin/bash
 #===================================================================================
-# Dropbox Client Multi-Device Test File Chunking
+# Firebox Client Multi-Device Test File Chunking
 #===================================================================================
 # Description: This script tests the file chunking functionality across multiple
 # client devices:
@@ -24,13 +24,13 @@ CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 # Define constants
-CLIENT1_NAME="dropbox-client-1"
-CLIENT2_NAME="dropbox-client-2"
-CONTAINER_SYNC_DIR="${SYNC_DIR:-/app/my_dropbox}"
+CLIENT1_NAME="firebox-client-1"
+CLIENT2_NAME="firebox-client-2"
+CONTAINER_SYNC_DIR="${SYNC_DIR:-/app/my_firebox}"
 CHUNK_DIR="${CHUNK_DIR:-/app/tmp/chunk}"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-DB_PATH="${DB_FILE_PATH:-/app/data/dropbox.db}"
-TEMP_DIR="/tmp/dropbox_test_${TIMESTAMP}"
+DB_PATH="${DB_FILE_PATH:-/app/data/firebox.db}"
+TEMP_DIR="/tmp/firebox_test_${TIMESTAMP}"
 FILE_SIZE_MB=12  # Create a file larger than 10MB to ensure multiple chunks
 WAIT_TIME=5  # seconds to wait for file processing
 
@@ -38,7 +38,7 @@ WAIT_TIME=5  # seconds to wait for file processing
 mkdir -p $TEMP_DIR
 
 echo -e "${BLUE}=========================================${NC}"
-echo -e "${GREEN}Dropbox Multi-Device File Chunking Test${NC}"
+echo -e "${GREEN}Firebox Multi-Device File Chunking Test${NC}"
 echo -e "${BLUE}=========================================${NC}"
 
 # Check if containers are running

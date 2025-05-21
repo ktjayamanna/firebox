@@ -2,7 +2,7 @@
 #===================================================================================
 # Start Multi-Client Containers
 #===================================================================================
-# Description: This script starts multiple Dropbox client containers using the
+# Description: This script starts multiple Firebox client containers using the
 # generated docker-compose.multi.yml file. It first ensures that the AWS services
 # and backend services are running, then starts the client containers.
 #
@@ -76,9 +76,9 @@ $SCRIPT_DIR/generate_multi_client_compose.sh $NUM_CLIENTS
 
 # Step 1.5: Ensure the Docker network exists
 echo -e "${YELLOW}Ensuring Docker network exists...${NC}"
-if ! docker network ls | grep -q "dropbox-network"; then
-    echo -e "${YELLOW}Creating dropbox-network...${NC}"
-    docker network create dropbox-network
+if ! docker network ls | grep -q "firebox-network"; then
+    echo -e "${YELLOW}Creating firebox-network...${NC}"
+    docker network create firebox-network
     if [ $? -eq 0 ]; then
         echo -e "${GREEN}Network created successfully.${NC}"
     else
@@ -86,7 +86,7 @@ if ! docker network ls | grep -q "dropbox-network"; then
         exit 1
     fi
 else
-    echo -e "${GREEN}Network dropbox-network already exists.${NC}"
+    echo -e "${GREEN}Network firebox-network already exists.${NC}"
 fi
 
 # Step 2: Check if AWS services are running
@@ -141,10 +141,10 @@ fi
 # Step 4: Check for existing client containers and stop them if needed
 echo -e "${YELLOW}Checking for existing client containers...${NC}"
 for ((i=1; i<=$NUM_CLIENTS; i++)); do
-    if is_container_running "dropbox-client-$i"; then
-        echo -e "${YELLOW}Container dropbox-client-$i is already running. Stopping it...${NC}"
-        docker stop dropbox-client-$i
-        docker rm dropbox-client-$i
+    if is_container_running "firebox-client-$i"; then
+        echo -e "${YELLOW}Container firebox-client-$i is already running. Stopping it...${NC}"
+        docker stop firebox-client-$i
+        docker rm firebox-client-$i
     fi
 done
 
@@ -162,7 +162,7 @@ fi
 
 # Wait for client containers to be ready
 for ((i=1; i<=$NUM_CLIENTS; i++)); do
-    wait_for_container "dropbox-client-$i" 60
+    wait_for_container "firebox-client-$i" 60
 done
 
 echo -e "\n${GREEN}Multi-client environment is now running!${NC}"

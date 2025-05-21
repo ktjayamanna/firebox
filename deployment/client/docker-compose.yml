@@ -1,11 +1,11 @@
 version: '3'
 
 services:
-  dropbox-client:
+  firebox-client:
     build:
       context: ../../
       dockerfile: deployment/client/Dockerfile
-    container_name: dropbox-client
+    container_name: firebox-client
     ports:
       - "8000:8000"
     volumes:
@@ -14,16 +14,16 @@ services:
       - ../../client/scripts:/app/scripts
       - ../../client/requirements.txt:/app/requirements.txt
       - ../../client/config.py:/app/config.py
-      - dropbox-data:/app/my_dropbox
+      - firebox-data:/app/my_firebox
       - db-data:/app/data
       - chunk-data:/app/tmp/chunk
     environment:
       - PYTHONPATH=/app
       - APP_DIR=/app
-      - SYNC_DIR=/app/my_dropbox
+      - SYNC_DIR=/app/my_firebox
       - CHUNK_DIR=/app/tmp/chunk
-      - DATABASE_URL=sqlite:///./data/dropbox.db
-      - DB_FILE_PATH=/app/data/dropbox.db
+      - DATABASE_URL=sqlite:///./data/firebox.db
+      - DB_FILE_PATH=/app/data/firebox.db
       - DB_POOL_SIZE=20
       - DB_MAX_OVERFLOW=10
       - DB_POOL_TIMEOUT=30
@@ -36,11 +36,11 @@ services:
       - REQUEST_TIMEOUT=30
       - MAX_RETRIES=3
     networks:
-      - dropbox-network
+      - firebox-network
     restart: unless-stopped
 
 volumes:
-  dropbox-data:
+  firebox-data:
     driver: local
   db-data:
     driver: local
@@ -48,5 +48,5 @@ volumes:
     driver: local
 
 networks:
-  dropbox-network:
+  firebox-network:
     external: true

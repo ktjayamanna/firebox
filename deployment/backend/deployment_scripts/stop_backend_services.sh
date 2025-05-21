@@ -8,7 +8,7 @@ YELLOW='\033[0;33m'
 NC='\033[0m' # No Color
 
 echo -e "${BLUE}=========================================${NC}"
-echo -e "${GREEN}Stopping Dropbox Backend Services${NC}"
+echo -e "${GREEN}Stopping Firebox Backend Services${NC}"
 echo -e "${BLUE}=========================================${NC}"
 
 # Navigate to the backend directory

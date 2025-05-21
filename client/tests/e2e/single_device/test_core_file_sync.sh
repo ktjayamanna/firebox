@@ -1,6 +1,6 @@
 #!/bin/bash
 #===================================================================================
-# Dropbox Client Test Core File Synchronization
+# Firebox Client Test Core File Synchronization
 #===================================================================================
 # Description: This script tests the core file synchronization functionality:
 # - Automatic file upload
@@ -9,7 +9,7 @@
 #
 # The script follows these steps:
 # 1. Create: Creates multiple files of different sizes
-# 2. Upload: Copies the files to the Dropbox sync directory
+# 2. Upload: Copies the files to the Firebox sync directory
 # 3. Verify: Confirms the files are processed and metadata is stored correctly
 # 4. API: Verifies the files are accessible via the API
 #===================================================================================
@@ -23,19 +23,19 @@ CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 # Define constants
-CONTAINER_NAME="dropbox-client"
-CONTAINER_SYNC_DIR="${SYNC_DIR:-/app/my_dropbox}"
+CONTAINER_NAME="firebox-client"
+CONTAINER_SYNC_DIR="${SYNC_DIR:-/app/my_firebox}"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-DB_PATH="${DB_FILE_PATH:-/app/data/dropbox.db}"
+DB_PATH="${DB_FILE_PATH:-/app/data/firebox.db}"
 API_URL="http://localhost:8000"
-TEMP_DIR="/tmp/dropbox_test_${TIMESTAMP}"
+TEMP_DIR="/tmp/firebox_test_${TIMESTAMP}"
 WAIT_TIME=3  # seconds to wait for file processing
 
 # Create temporary directory
 mkdir -p $TEMP_DIR
 
 echo -e "${BLUE}=========================================${NC}"
-echo -e "${GREEN}Dropbox Core File Synchronization Test${NC}"
+echo -e "${GREEN}Firebox Core File Synchronization Test${NC}"
 echo -e "${BLUE}=========================================${NC}"
 
 # Check if container is running

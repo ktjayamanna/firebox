@@ -2,7 +2,7 @@
 #===================================================================================
 # Stop Multi-Client Containers
 #===================================================================================
-# Description: This script stops the multi-client Dropbox containers that were
+# Description: This script stops the multi-client Firebox containers that were
 # started with the start_multi_client_containers.sh script.
 #
 # Usage: ./stop_multi_client_containers.sh [--clean]

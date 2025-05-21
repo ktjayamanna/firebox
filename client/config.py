@@ -6,20 +6,20 @@ import socket
 CLIENT_ID = os.environ.get("CLIENT_ID", socket.gethostname())
 
 # Sync directory
-SYNC_DIR = os.environ.get("SYNC_DIR", "/app/my_dropbox")
+SYNC_DIR = os.environ.get("SYNC_DIR", "/app/my_firebox")
 
 # Chunk storage directory (separate from sync directory)
 CHUNK_DIR = os.environ.get("CHUNK_DIR", "/app/tmp/chunk")
 
 # Database settings
-DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite:///./dropbox.db")
+DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite:///./firebox.db")
 DB_POOL_SIZE = int(os.environ.get("DB_POOL_SIZE", 20))
 DB_MAX_OVERFLOW = int(os.environ.get("DB_MAX_OVERFLOW", 10))
 DB_POOL_TIMEOUT = int(os.environ.get("DB_POOL_TIMEOUT", 30))
 DB_POOL_RECYCLE = int(os.environ.get("DB_POOL_RECYCLE", 3600))
 
 # Database file path (used in scripts)
-DB_FILE_PATH = os.environ.get("DB_FILE_PATH", "/app/data/dropbox.db")
+DB_FILE_PATH = os.environ.get("DB_FILE_PATH", "/app/data/firebox.db")
 
 # Application directory
 APP_DIR = os.environ.get("APP_DIR", "/app")

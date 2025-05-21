@@ -1,6 +1,6 @@
-# Dropbox Client
+# Firebox Client
 
-This is the client component of the Dropbox-like system. It provides a local synchronization service with the following features:
+This is the client component of the Firebox-like system. It provides a local synchronization service with the following features:
 
 - File synchronization using inotify for real-time change detection
 - File chunking (5MB chunks) for efficient synchronization

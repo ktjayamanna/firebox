@@ -1,8 +1,8 @@
 #!/bin/bash
 #===================================================================================
-# Dropbox Client Multi-Device E2E Test Suite Runner
+# Firebox Client Multi-Device E2E Test Suite Runner
 #===================================================================================
-# Description: This script runs all the multi-device E2E tests for the Dropbox client.
+# Description: This script runs all the multi-device E2E tests for the Firebox client.
 # These tests focus on functionality that can be tested with multiple client devices
 # running independently.
 #===================================================================================
@@ -66,7 +66,7 @@ run_test() {
 
 # Start the test run
 echo -e "${BLUE}=========================================${NC}"
-echo -e "${GREEN}Dropbox Client Multi-Device E2E Test Suite${NC}"
+echo -e "${GREEN}Firebox Client Multi-Device E2E Test Suite${NC}"
 echo -e "${BLUE}=========================================${NC}"
 echo -e "Starting test run at: $(date)"
 echo -e "Logging to: ${LOG_FILE}"
@@ -75,8 +75,8 @@ echo -e "\n"
 
 # Check if multi-client containers are running
 echo -e "${YELLOW}Checking if multi-client containers are running...${NC}"
-CLIENT1_RUNNING=$(docker ps | grep -q "dropbox-client-1" && echo "true" || echo "false")
-CLIENT2_RUNNING=$(docker ps | grep -q "dropbox-client-2" && echo "true" || echo "false")
+CLIENT1_RUNNING=$(docker ps | grep -q "firebox-client-1" && echo "true" || echo "false")
+CLIENT2_RUNNING=$(docker ps | grep -q "firebox-client-2" && echo "true" || echo "false")
 
 if [ "$CLIENT1_RUNNING" = "false" ] || [ "$CLIENT2_RUNNING" = "false" ]; then
     echo -e "${YELLOW}Starting multi-client containers...${NC}"
@@ -87,8 +87,8 @@ if [ "$CLIENT1_RUNNING" = "false" ] || [ "$CLIENT2_RUNNING" = "false" ]; then
     sleep 10
     
     # Check again if containers are running
-    CLIENT1_RUNNING=$(docker ps | grep -q "dropbox-client-1" && echo "true" || echo "false")
-    CLIENT2_RUNNING=$(docker ps | grep -q "dropbox-client-2" && echo "true" || echo "false")
+    CLIENT1_RUNNING=$(docker ps | grep -q "firebox-client-1" && echo "true" || echo "false")
+    CLIENT2_RUNNING=$(docker ps | grep -q "firebox-client-2" && echo "true" || echo "false")
     
     if [ "$CLIENT1_RUNNING" = "false" ] || [ "$CLIENT2_RUNNING" = "false" ]; then
         echo -e "${RED}Failed to start multi-client containers. Exiting.${NC}"

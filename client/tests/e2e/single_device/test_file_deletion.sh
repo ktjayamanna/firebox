@@ -1,6 +1,6 @@
 #!/bin/bash
 #===================================================================================
-# Dropbox Client Test File Deletion
+# Firebox Client Test File Deletion
 #===================================================================================
 # Description: This script tests the file deletion functionality:
 # - Detection when files are removed from sync directory
@@ -22,18 +22,18 @@ CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 # Define constants
-CONTAINER_NAME="dropbox-client"
-CONTAINER_SYNC_DIR="${SYNC_DIR:-/app/my_dropbox}"
+CONTAINER_NAME="firebox-client"
+CONTAINER_SYNC_DIR="${SYNC_DIR:-/app/my_firebox}"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-DB_PATH="${DB_FILE_PATH:-/app/data/dropbox.db}"
-TEMP_DIR="/tmp/dropbox_test_${TIMESTAMP}"
+DB_PATH="${DB_FILE_PATH:-/app/data/firebox.db}"
+TEMP_DIR="/tmp/firebox_test_${TIMESTAMP}"
 WAIT_TIME=3  # seconds to wait for file processing
 
 # Create temporary directory
 mkdir -p $TEMP_DIR
 
 echo -e "${BLUE}=========================================${NC}"
-echo -e "${GREEN}Dropbox File Deletion Test${NC}"
+echo -e "${GREEN}Firebox File Deletion Test${NC}"
 echo -e "${BLUE}=========================================${NC}"
 
 # Check if container is running

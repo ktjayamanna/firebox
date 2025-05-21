@@ -1,6 +1,6 @@
-# Dropbox Multi-Device E2E Tests
+# Firebox Multi-Device E2E Tests
 
-This directory contains end-to-end tests for the Dropbox client in a multi-device environment. These tests verify that multiple client devices can operate independently with the same backend services.
+This directory contains end-to-end tests for the Firebox client in a multi-device environment. These tests verify that multiple client devices can operate independently with the same backend services.
 
 ## Test Environment
 

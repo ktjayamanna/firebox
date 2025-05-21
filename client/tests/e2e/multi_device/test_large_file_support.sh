@@ -1,6 +1,6 @@
 #!/bin/bash
 #===================================================================================
-# Dropbox Client Multi-Device Test Large File Support
+# Firebox Client Multi-Device Test Large File Support
 #===================================================================================
 # Description: This script tests the large file support functionality across multiple
 # client devices:
@@ -23,12 +23,12 @@ CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 # Define constants
-CLIENT1_NAME="dropbox-client-1"
-CLIENT2_NAME="dropbox-client-2"
-CONTAINER_SYNC_DIR="${SYNC_DIR:-/app/my_dropbox}"
+CLIENT1_NAME="firebox-client-1"
+CLIENT2_NAME="firebox-client-2"
+CONTAINER_SYNC_DIR="${SYNC_DIR:-/app/my_firebox}"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-DB_PATH="${DB_FILE_PATH:-/app/data/dropbox.db}"
-TEMP_DIR="/tmp/dropbox_test_${TIMESTAMP}"
+DB_PATH="${DB_FILE_PATH:-/app/data/firebox.db}"
+TEMP_DIR="/tmp/firebox_test_${TIMESTAMP}"
 DOWNLOAD_DIR="/tmp/downloaded_chunks_${TIMESTAMP}"
 CLIENT1_API_URL="http://localhost:9101"
 CLIENT2_API_URL="http://localhost:9102"
@@ -41,7 +41,7 @@ mkdir -p $TEMP_DIR
 mkdir -p $DOWNLOAD_DIR
 
 echo -e "${BLUE}=========================================${NC}"
-echo -e "${GREEN}Dropbox Multi-Device Large File Support Test${NC}"
+echo -e "${GREEN}Firebox Multi-Device Large File Support Test${NC}"
 echo -e "${BLUE}=========================================${NC}"
 
 # Check if containers are running

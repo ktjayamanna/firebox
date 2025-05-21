@@ -1,6 +1,6 @@
 #!/bin/bash
 #===================================================================================
-# Dropbox Client Test File Chunking
+# Firebox Client Test File Chunking
 #===================================================================================
 # Description: This script tests the file chunking functionality:
 # - Files split into 5MB chunks
@@ -9,7 +9,7 @@
 #
 # The script follows these steps:
 # 1. Create: Creates a large file that will be split into multiple chunks
-# 2. Upload: Copies the file to the Dropbox sync directory
+# 2. Upload: Copies the file to the Firebox sync directory
 # 3. Verify: Confirms the file is split into chunks with proper fingerprints
 # 4. Storage: Checks that chunks are stored correctly in the chunk directory
 #===================================================================================
@@ -23,12 +23,12 @@ CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 # Define constants
-CONTAINER_NAME="dropbox-client"
-CONTAINER_SYNC_DIR="${SYNC_DIR:-/app/my_dropbox}"
+CONTAINER_NAME="firebox-client"
+CONTAINER_SYNC_DIR="${SYNC_DIR:-/app/my_firebox}"
 CHUNK_DIR="${CHUNK_DIR:-/app/tmp/chunk}"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-DB_PATH="${DB_FILE_PATH:-/app/data/dropbox.db}"
-TEMP_DIR="/tmp/dropbox_test_${TIMESTAMP}"
+DB_PATH="${DB_FILE_PATH:-/app/data/firebox.db}"
+TEMP_DIR="/tmp/firebox_test_${TIMESTAMP}"
 FILE_SIZE_MB=12  # Create a file larger than 10MB to ensure multiple chunks
 WAIT_TIME=5  # seconds to wait for file processing
 
@@ -36,7 +36,7 @@ WAIT_TIME=5  # seconds to wait for file processing
 mkdir -p $TEMP_DIR
 
 echo -e "${BLUE}=========================================${NC}"
-echo -e "${GREEN}Dropbox File Chunking Test${NC}"
+echo -e "${GREEN}Firebox File Chunking Test${NC}"
 echo -e "${BLUE}=========================================${NC}"
 
 # Check if container is running

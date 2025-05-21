@@ -19,9 +19,9 @@ CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 # Define constants
-CLIENT1_CONTAINER="dropbox-client-1"
-CLIENT2_CONTAINER="dropbox-client-2"
-SYNC_DIR="/app/my_dropbox"
+CLIENT1_CONTAINER="firebox-client-1"
+CLIENT2_CONTAINER="firebox-client-2"
+SYNC_DIR="/app/my_firebox"
 SYNC_WAIT_TIME=10  # Wait time for sync to complete (in seconds)
 
 # Function to check if a container is running
@@ -135,7 +135,7 @@ check_db_for_file() {
     local file_path=$2
 
     echo -e "${YELLOW}Checking database in $container for file $file_path...${NC}"
-    docker exec $container bash -c "sqlite3 /app/data/dropbox.db 'SELECT file_path FROM files_metadata WHERE file_path=\"$file_path\";'"
+    docker exec $container bash -c "sqlite3 /app/data/firebox.db 'SELECT file_path FROM files_metadata WHERE file_path=\"$file_path\";'"
 }
 
 # Function to get chunk fingerprints from database
@@ -145,7 +145,7 @@ get_chunk_fingerprints() {
 
     echo -e "${YELLOW}Getting chunk fingerprints for file $file_path in $container...${NC}" >&2
     # First get the file_id
-    local file_id=$(docker exec $container bash -c "sqlite3 /app/data/dropbox.db 'SELECT file_id FROM files_metadata WHERE file_path=\"$file_path\";'" | tr -d '\r\n')
+    local file_id=$(docker exec $container bash -c "sqlite3 /app/data/firebox.db 'SELECT file_id FROM files_metadata WHERE file_path=\"$file_path\";'" | tr -d '\r\n')
 
     if [ -z "$file_id" ]; then
         echo -e "${RED}File ID not found for $file_path${NC}" >&2
@@ -153,7 +153,7 @@ get_chunk_fingerprints() {
     fi
 
     # Then get all chunk fingerprints for this file
-    docker exec $container bash -c "sqlite3 /app/data/dropbox.db 'SELECT fingerprint FROM chunks WHERE file_id=\"$file_id\" ORDER BY part_number;'" | tr '\n' '|'
+    docker exec $container bash -c "sqlite3 /app/data/firebox.db 'SELECT fingerprint FROM chunks WHERE file_id=\"$file_id\" ORDER BY part_number;'" | tr '\n' '|'
 }
 
 # Function to compare fingerprints between containers

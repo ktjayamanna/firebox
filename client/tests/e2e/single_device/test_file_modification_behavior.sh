@@ -1,6 +1,6 @@
 #!/bin/bash
 #===================================================================================
-# Dropbox Client Test File Modification Behavior
+# Firebox Client Test File Modification Behavior
 #===================================================================================
 # Description: This script tests how the system handles file modifications,
 # particularly focusing on file record creation and chunk processing.
@@ -31,11 +31,11 @@ CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 # Define constants
-CONTAINER_NAME="dropbox-client"
-CONTAINER_SYNC_DIR="${SYNC_DIR:-/app/my_dropbox}"
+CONTAINER_NAME="firebox-client"
+CONTAINER_SYNC_DIR="${SYNC_DIR:-/app/my_firebox}"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-DB_PATH="${DB_FILE_PATH:-/app/data/dropbox.db}"
-TEMP_DIR="/tmp/dropbox_test_${TIMESTAMP}"
+DB_PATH="${DB_FILE_PATH:-/app/data/firebox.db}"
+TEMP_DIR="/tmp/firebox_test_${TIMESTAMP}"
 FILE_SIZE_MB=10  # Create a 10MB file to ensure multiple chunks
 INITIAL_WAIT_TIME=5  # seconds to wait for initial file processing
 
@@ -43,7 +43,7 @@ INITIAL_WAIT_TIME=5  # seconds to wait for initial file processing
 mkdir -p $TEMP_DIR
 
 echo -e "${BLUE}=========================================${NC}"
-echo -e "${GREEN}Dropbox File Modification Behavior Test${NC}"
+echo -e "${GREEN}Firebox File Modification Behavior Test${NC}"
 echo -e "${BLUE}=========================================${NC}"
 
 # Check if container is running

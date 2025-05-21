@@ -15,7 +15,7 @@ NC='\033[0m' # No Color
 # Configuration
 FILES_SERVICE_URL="http://localhost:8001"
 MINIO_URL="http://localhost:9000"
-S3_BUCKET_NAME="dropbox-chunks"
+S3_BUCKET_NAME="firebox-chunks"
 TEST_FILE_SIZE_MB=2  # Size of test file in MB
 CHUNK_SIZE_MB=5       # Size of each chunk in MB
 
@@ -69,7 +69,7 @@ else
 fi
 
 # Create a test directory
-TEST_DIR="/tmp/dropbox-s3-test"
+TEST_DIR="/tmp/firebox-s3-test"
 mkdir -p $TEST_DIR
 echo -e "Created test directory: $TEST_DIR"
 

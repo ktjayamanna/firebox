@@ -20,7 +20,7 @@ services:
       timeout: 20s
       retries: 3
     networks:
-      - dropbox-network
+      - firebox-network
     restart: unless-stopped
 
   # Create buckets and set policies
@@ -30,13 +30,13 @@ services:
     depends_on:
       - minio
     networks:
-      - dropbox-network
+      - firebox-network
     entrypoint: >
       /bin/sh -c "
       sleep 10 &&
       /usr/bin/mc config host add myminio http://minio:9000 minioadmin minioadmin &&
-      /usr/bin/mc mb myminio/dropbox-chunks --region=us-east-1 &&
-      /usr/bin/mc policy set public myminio/dropbox-chunks &&
+      /usr/bin/mc mb myminio/firebox-chunks --region=us-east-1 &&
+      /usr/bin/mc policy set public myminio/firebox-chunks &&
       exit 0
       "
 
@@ -48,7 +48,7 @@ services:
       - "8002:8000"
     command: "-jar DynamoDBLocal.jar -sharedDb -inMemory"
     networks:
-      - dropbox-network
+      - firebox-network
     restart: unless-stopped
 
   # DynamoDB setup (create tables)
@@ -62,7 +62,7 @@ services:
       - AWS_SECRET_ACCESS_KEY=dummy
       - AWS_DEFAULT_REGION=us-east-1
     networks:
-      - dropbox-network
+      - firebox-network
     entrypoint: >
       /bin/sh -c "
       sleep 5 &&
@@ -97,7 +97,7 @@ services:
       - minio
       - dynamodb-local
     networks:
-      - dropbox-network
+      - firebox-network
     restart: unless-stopped
 
 volumes:
@@ -105,5 +105,5 @@ volumes:
     driver: local
 
 networks:
-  dropbox-network:
+  firebox-network:
     external: true

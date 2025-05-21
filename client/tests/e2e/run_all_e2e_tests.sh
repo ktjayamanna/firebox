@@ -1,8 +1,8 @@
 #!/bin/bash
 #===================================================================================
-# Dropbox Client E2E Test Suite Runner
+# Firebox Client E2E Test Suite Runner
 #===================================================================================
-# Description: This script runs all the E2E tests for the Dropbox client.
+# Description: This script runs all the E2E tests for the Firebox client.
 # Currently, it only runs the single device tests, but it can be extended to run
 # multi-device tests as well.
 #===================================================================================
@@ -21,7 +21,7 @@ SINGLE_DEVICE_DIR="${SCRIPT_DIR}/single_device"
 MULTI_DEVICE_DIR="${SCRIPT_DIR}/multi_device"
 
 echo -e "${BLUE}=========================================${NC}"
-echo -e "${GREEN}Dropbox Client E2E Test Suite${NC}"
+echo -e "${GREEN}Firebox Client E2E Test Suite${NC}"
 echo -e "${BLUE}=========================================${NC}"
 echo -e "Starting test run at: $(date)"
 echo -e "\n"

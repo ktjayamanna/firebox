@@ -13,7 +13,7 @@ services:
       - AWS_SECRET_ACCESS_KEY=minioadmin
       - AWS_REGION=us-east-1
       - S3_ENDPOINT=http://aws-s3:9000
-      - S3_BUCKET_NAME=dropbox-chunks
+      - S3_BUCKET_NAME=firebox-chunks
       - S3_USE_SSL=False
       - DYNAMODB_HOST=http://aws-dynamodb:8000
       - DYNAMODB_REGION=us-east-1
@@ -22,7 +22,7 @@ services:
       - CHUNK_SIZE=5242880
       - PRESIGNED_URL_EXPIRATION=3600
     networks:
-      - dropbox-network
+      - firebox-network
     depends_on:
       - aws-services
     restart: unless-stopped
@@ -47,9 +47,9 @@ services:
       sleep infinity
       "
     networks:
-      - dropbox-network
+      - firebox-network
     restart: unless-stopped
 
 networks:
-  dropbox-network:
+  firebox-network:
     external: true

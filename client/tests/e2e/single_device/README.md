@@ -1,10 +1,10 @@
-# Dropbox Client Single Device E2E Tests
+# Firebox Client Single Device E2E Tests
 
-This directory contains end-to-end (E2E) tests for the Dropbox client that can be run on a single device. These tests verify the core functionality of the client without requiring multiple devices or clients to be synchronized.
+This directory contains end-to-end (E2E) tests for the Firebox client that can be run on a single device. These tests verify the core functionality of the client without requiring multiple devices or clients to be synchronized.
 
 ## Overview
 
-The tests in this directory focus on the following aspects of the Dropbox client:
+The tests in this directory focus on the following aspects of the Firebox client:
 
 1. **Core File Synchronization**: Basic file upload and synchronization
 2. **File Chunking**: Splitting large files into chunks

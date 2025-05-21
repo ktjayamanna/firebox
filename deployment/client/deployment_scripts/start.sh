@@ -3,7 +3,7 @@ set -e
 
 # Use environment variables or defaults
 APP_DIR="${APP_DIR:-/app}"
-DB_FILE="${DB_FILE_PATH:-${APP_DIR}/data/dropbox.db}"
+DB_FILE="${DB_FILE_PATH:-${APP_DIR}/data/firebox.db}"
 ALEMBIC_INI="${APP_DIR}/alembic.ini"
 ALEMBIC_DIR="${APP_DIR}/alembic"
 ALEMBIC_ENV="${ALEMBIC_DIR}/env.py"
@@ -26,7 +26,7 @@ if [ ! -f "$ALEMBIC_INI" ]; then
 [alembic]
 script_location = alembic
 prepend_sys_path = .
-sqlalchemy.url = sqlite:///./data/dropbox.db
+sqlalchemy.url = sqlite:///./data/firebox.db
 
 [loggers]
 keys = root,sqlalchemy,alembic

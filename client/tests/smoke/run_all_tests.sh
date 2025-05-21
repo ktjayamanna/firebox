@@ -1,8 +1,8 @@
 #!/bin/bash
 #===================================================================================
-# Dropbox Client Smoke Test Suite Runner
+# Firebox Client Smoke Test Suite Runner
 #===================================================================================
-# Description: This script runs all smoke tests for the Dropbox client application.
+# Description: This script runs all smoke tests for the Firebox client application.
 # It ensures the Docker container is running, prepares the test environment, and
 # executes each test in sequence.
 #
@@ -25,8 +25,8 @@ NC='\033[0m' # No Color
 
 # Default settings
 DO_CLEANUP=true
-CONTAINER_NAME="dropbox-client"
-SYNC_DIR="/app/my_dropbox"
+CONTAINER_NAME="firebox-client"
+SYNC_DIR="/app/my_firebox"
 TEST_DIR="client/tests/smoke"
 
 # Process command line arguments
@@ -37,7 +37,7 @@ for arg in "$@"; do
       shift
       ;;
     --help)
-      echo -e "${CYAN}Dropbox Client Smoke Test Suite Runner${NC}"
+      echo -e "${CYAN}Firebox Client Smoke Test Suite Runner${NC}"
       echo -e "Usage: ./client/tests/smoke/run_all_tests.sh [options]"
       echo -e "  Options:"
       echo -e "    --no-cleanup    Skip cleaning up the sync directory before tests"
@@ -58,7 +58,7 @@ done
 #===================================================================================
 
 echo -e "${BLUE}=========================================${NC}"
-echo -e "${GREEN}Running All Dropbox Smoke Tests${NC}"
+echo -e "${GREEN}Running All Firebox Smoke Tests${NC}"
 echo -e "${BLUE}=========================================${NC}"
 
 #-------------------

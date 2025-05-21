@@ -1,1 +1,1 @@
-This is a small test file for Dropbox sync testing.
+This is a small test file for Firebox sync testing.

@@ -7,7 +7,7 @@ AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY', 'minioadmin')
 
 # S3 Configuration
 S3_ENDPOINT = os.environ.get('S3_ENDPOINT', 'http://minio:9000')
-S3_BUCKET_NAME = os.environ.get('S3_BUCKET_NAME', 'dropbox-chunks')
+S3_BUCKET_NAME = os.environ.get('S3_BUCKET_NAME', 'firebox-chunks')
 S3_USE_SSL = os.environ.get('S3_USE_SSL', 'False').lower() == 'true'
 
 # DynamoDB Configuration

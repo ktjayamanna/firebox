@@ -23,7 +23,7 @@ RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2
 WORKDIR /app
 
 # Create necessary directories
-RUN mkdir -p /app/my_dropbox
+RUN mkdir -p /app/my_firebox
 RUN mkdir -p /app/data
 RUN mkdir -p /app/tmp/chunk
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 #===================================================================================
-# Dropbox Client DynamoDB CRUD Smoke Test
+# Firebox Client DynamoDB CRUD Smoke Test
 #===================================================================================
 # Description: This script tests the ability to perform CRUD operations on DynamoDB
 # tables from the client container. It verifies that the client can properly
@@ -57,7 +57,7 @@ generate_uuid() {
 #===================================================================================
 
 echo -e "${BLUE}=========================================${NC}"
-echo -e "${GREEN}Dropbox DynamoDB CRUD Smoke Test${NC}"
+echo -e "${GREEN}Firebox DynamoDB CRUD Smoke Test${NC}"
 echo -e "${BLUE}=========================================${NC}"
 
 #-------------------
