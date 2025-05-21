@@ -17,6 +17,10 @@ services:
       - firebox-data:/app/my_firebox
       - db-data:/app/data
       - chunk-data:/app/tmp/chunk
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     environment:
       - PYTHONPATH=/app
       - APP_DIR=/app

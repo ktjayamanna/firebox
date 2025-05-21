@@ -17,8 +17,15 @@ RUN pip install --no-cache-dir -r /app/requirements.txt
 # Copy application code
 COPY backend/firebox/files_service/ /app/
 
+# Create a tmp directory for any temporary processing
+RUN mkdir -p /app/tmp
+
+# Copy startup script
+COPY deployment/backend/deployment_scripts/start.sh /app/start.sh
+RUN chmod +x /app/start.sh
+
 # Expose the FastAPI port
 EXPOSE 8001
 
 # Command to run the application
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001"]
+CMD ["/bin/bash", "/app/start.sh"]

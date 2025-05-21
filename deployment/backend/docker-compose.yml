@@ -8,6 +8,10 @@ services:
     container_name: files-service
     ports:
       - "8001:8001"
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     environment:
       - AWS_ACCESS_KEY_ID=minioadmin
       - AWS_SECRET_ACCESS_KEY=minioadmin

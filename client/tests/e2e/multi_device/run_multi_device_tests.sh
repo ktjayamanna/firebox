@@ -18,6 +18,7 @@ NC='\033[0m' # No Color
 # Define constants
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../../" && pwd)"
 LOG_DIR="${SCRIPT_DIR}/../../logs"  # Go up two levels to reach client/tests/logs
 LOG_FILE="${LOG_DIR}/multi_device_test_run_${TIMESTAMP}.log"
 TEST_DIR="${SCRIPT_DIR}"
@@ -80,21 +81,21 @@ CLIENT2_RUNNING=$(docker ps | grep -q "firebox-client-2" && echo "true" || echo 
 
 if [ "$CLIENT1_RUNNING" = "false" ] || [ "$CLIENT2_RUNNING" = "false" ]; then
     echo -e "${YELLOW}Starting multi-client containers...${NC}"
-    ../../../client/scripts/bash/start_multi_client_containers.sh $NUM_CLIENTS
-    
+    ${PROJECT_ROOT}/client/scripts/bash/start_multi_client_containers.sh $NUM_CLIENTS
+
     # Wait for containers to initialize
     echo -e "${YELLOW}Waiting for containers to initialize (10 seconds)...${NC}"
     sleep 10
-    
+
     # Check again if containers are running
     CLIENT1_RUNNING=$(docker ps | grep -q "firebox-client-1" && echo "true" || echo "false")
     CLIENT2_RUNNING=$(docker ps | grep -q "firebox-client-2" && echo "true" || echo "false")
-    
+
     if [ "$CLIENT1_RUNNING" = "false" ] || [ "$CLIENT2_RUNNING" = "false" ]; then
         echo -e "${RED}Failed to start multi-client containers. Exiting.${NC}"
         exit 1
     fi
-    
+
     echo -e "${GREEN}Multi-client containers started successfully.${NC}"
 fi
 

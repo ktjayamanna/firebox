@@ -3,11 +3,23 @@ set -e
 
 # Use environment variables or defaults
 APP_DIR="${APP_DIR:-/app}"
+SYNC_DIR="${SYNC_DIR:-${APP_DIR}/my_firebox}"
+CHUNK_DIR="${CHUNK_DIR:-${APP_DIR}/tmp/chunk}"
 DB_FILE="${DB_FILE_PATH:-${APP_DIR}/data/firebox.db}"
 ALEMBIC_INI="${APP_DIR}/alembic.ini"
 ALEMBIC_DIR="${APP_DIR}/alembic"
 ALEMBIC_ENV="${ALEMBIC_DIR}/env.py"
 ALEMBIC_VERSIONS="${ALEMBIC_DIR}/versions"
+
+# Clean up sync folder to prevent disk bloat
+echo "Cleaning up sync folder..."
+rm -rf "${SYNC_DIR:?}"/*
+mkdir -p "${SYNC_DIR}"
+
+# Clean up chunk folder to prevent disk bloat
+echo "Cleaning up chunk folder..."
+rm -rf "${CHUNK_DIR:?}"/*
+mkdir -p "${CHUNK_DIR}"
 
 # Always recreate the database file to ensure it's clean
 echo "Recreating database file..."
